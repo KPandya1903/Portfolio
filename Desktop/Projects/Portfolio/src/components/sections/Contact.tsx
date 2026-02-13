@@ -12,7 +12,7 @@ export const Contact = () => {
           </h2>
           <div className="w-20 h-1 bg-accent-primary dark:bg-accent-secondary mx-auto mb-8" />
           <p className="text-center text-text-secondary dark:text-text-secondary-dark max-w-2xl mx-auto mb-16">
-            I'm always open to discussing new opportunities, collaborations, or just
+            I&apos;m always open to discussing new opportunities, collaborations, or just
             having a chat about distributed systems and AI/ML.
           </p>
         </ScrollReveal>
