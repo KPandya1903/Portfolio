@@ -71,12 +71,12 @@ export const Hero = () => {
                 Get in Touch
               </button>
               <a
-                href="/resume.pdf"
+                href="/Kunj_Pandya_Resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-3 bg-surface-light dark:bg-surface-dark border-2 border-accent-cream dark:border-accent-cream/30 text-text-primary dark:text-text-primary-dark rounded-lg font-medium hover:border-accent-secondary dark:hover:border-accent-secondary hover:shadow-card transition-all"
               >
-                Resume
+                View Resume
               </a>
             </div>
 
