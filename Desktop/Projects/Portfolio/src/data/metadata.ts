@@ -2,10 +2,10 @@ export const siteMetadata = {
   name: "Kunj Pandya",
   title: "Full-Stack Engineer & Entrepreneur",
   description: "Building scalable backend systems and intelligent applications. MS CS student at Stevens Institute of Technology with expertise in distributed systems, microservices architecture, and cloud infrastructure.",
-  url: "https://kunjpandya.com", // Update with actual domain
+  url: "https://kunjpandya.vercel.app/",
   email: "kunjspandya@gmail.com",
   github: "https://github.com/kpandya1903",
-  linkedin: "https://linkedin.com/in/kunjpandya", // Update with actual LinkedIn URL
+  linkedin: "https://linkedin.com/in/kpandya7", 
   location: "Hoboken, NJ",
   bio: [
     "Full-stack engineer and aspiring entrepreneur passionate about building scalable systems that solve real-world problems.",
