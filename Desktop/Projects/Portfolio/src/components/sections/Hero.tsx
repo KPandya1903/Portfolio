@@ -29,14 +29,15 @@ export const Hero = () => {
               <p className="text-text-secondary">
                 📍 {siteMetadata.location}
               </p>
+              <p className="text-sm font-medium text-accent-secondary mt-2">
+                {siteMetadata.availability}
+              </p>
             </div>
 
             {/* Bio */}
             <div className="max-w-2xl mx-auto mb-10">
               <p className="text-text-secondary leading-relaxed">
-                Building scalable backend systems and intelligent applications.
-                From distributed task orchestrators to AI-powered platforms,
-                I turn ideas into production-ready solutions that scale.
+                {siteMetadata.tagline}
               </p>
             </div>
 
@@ -44,15 +45,15 @@ export const Hero = () => {
             <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mb-10 pb-10 border-b border-accent-cream">
               <div>
                 <div className="text-2xl font-bold text-accent-primary">10K+</div>
-                <div className="text-sm text-text-secondary">Tasks/Day Processed</div>
+                <div className="text-sm text-text-secondary">Requests/Day in Production</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-accent-primary">500+</div>
-                <div className="text-sm text-text-secondary">Active Users</div>
+                <div className="text-2xl font-bold text-accent-primary">1st</div>
+                <div className="text-sm text-text-secondary">QuackHacks &apos;26</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-accent-primary">94%</div>
-                <div className="text-sm text-text-secondary">ML Accuracy</div>
+                <div className="text-2xl font-bold text-accent-primary">Top 100</div>
+                <div className="text-sm text-text-secondary">HackHouse SF</div>
               </div>
             </div>
 

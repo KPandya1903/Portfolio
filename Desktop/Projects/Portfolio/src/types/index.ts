@@ -8,6 +8,8 @@ export interface Project {
   impact: string;
   tech: string[];
   githubRepo?: string;
+  liveUrl?: string;
+  privateRepo?: boolean;
   highlights: string[];
   date: string;
 }
@@ -31,6 +33,13 @@ export interface Education {
   location: string;
   period: string;
   coursework?: string[];
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  detail: string;
+  date: string;
 }
 
 export interface SkillCategory {

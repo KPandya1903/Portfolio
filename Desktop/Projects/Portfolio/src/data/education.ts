@@ -10,17 +10,19 @@ export const education: Education[] = [
     period: "Sept 2025 – May 2027",
     coursework: [
       "Distributed Systems",
-      "Cloud Computing",
+      "Operating Systems",
       "Concurrent Programming",
-      "Parallel Computing",
-      "Database Management Systems"
+      "Parallel Computing (CUDA)",
+      "Machine Learning",
+      "Database Management Systems",
+      "Cloud Computing"
     ]
   },
   {
     id: "djsce",
     degree: "Bachelor of Technology",
     field: "Artificial Intelligence and Machine Learning",
-    institution: "D. J. Sanghvi College of Engineering, Mumbai University",
+    institution: "D.J. Sanghvi College of Engineering, Mumbai University",
     location: "Mumbai, India",
     period: "Sept 2021 – May 2025",
     coursework: [

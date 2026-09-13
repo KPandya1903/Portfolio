@@ -1,7 +1,8 @@
 import { ScrollReveal } from "../animations/ScrollReveal";
 import { siteMetadata } from "@/data/metadata";
 import { education } from "@/data/education";
-import { HiAcademicCap, HiLocationMarker } from "react-icons/hi";
+import { achievements } from "@/data/achievements";
+import { HiAcademicCap, HiBadgeCheck, HiLocationMarker } from "react-icons/hi";
 
 export const About = () => {
   return (
@@ -27,6 +28,32 @@ export const About = () => {
             ))}
           </div>
         </ScrollReveal>
+
+        {/* Highlights */}
+        <ScrollReveal delay={0.3}>
+          <h3 className="text-3xl font-bold text-center mb-8 text-text-primary">
+            Highlights
+          </h3>
+        </ScrollReveal>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
+          {achievements.map((item, index) => (
+            <ScrollReveal key={item.id} delay={0.1 * (index + 1)}>
+              <div className="h-full bg-surface-light rounded-xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border border-accent-cream">
+                <div className="flex items-start gap-3 mb-3">
+                  <HiBadgeCheck className="w-6 h-6 text-accent-primary flex-shrink-0" />
+                  <h4 className="text-lg font-bold text-text-primary leading-snug">
+                    {item.title}
+                  </h4>
+                </div>
+                <p className="text-sm text-text-secondary leading-relaxed mb-3">
+                  {item.detail}
+                </p>
+                <p className="text-xs text-text-secondary">{item.date}</p>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
 
         {/* Education */}
         <ScrollReveal delay={0.4}>

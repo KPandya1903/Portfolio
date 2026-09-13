@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://kunjpandya.com/sitemap.xml',
+    sitemap: 'https://kunjpandya.vercel.app/sitemap.xml',
   };
 }

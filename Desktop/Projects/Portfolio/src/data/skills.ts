@@ -4,54 +4,75 @@ export const skills: SkillCategory[] = [
   {
     category: "Languages",
     skills: [
-      "Java (Proficient; Concurrency)",
-      "Python (FastAPI, NumPy)",
-      "C/C++ (CUDA, Systems Programming)",
-      "JavaScript/TypeScript",
-      "Go"
+      "Python",
+      "Java",
+      "TypeScript / JavaScript",
+      "Go",
+      "C / C++",
+      "Swift",
+      "SQL",
+      "Bash"
     ]
   },
   {
-    category: "Backend Systems",
+    category: "Distributed Systems & Backend",
     skills: [
-      "Distributed Systems (DHTs, Fault Tolerance)",
-      "gRPC",
-      "RESTful APIs",
-      "PostgreSQL (Schema Design)",
-      "Redis",
-      "Microservices"
+      "Chord DHT & Consistent Hashing",
+      "gRPC / Protobuf",
+      "FastAPI",
+      "Node.js / Express",
+      "Redis (Queues, Pub/Sub, Caching)",
+      "PostgreSQL",
+      "WebSockets",
+      "Fault Tolerance & Idempotency",
+      "Concurrency"
     ]
   },
   {
-    category: "Infrastructure & ML Ops",
+    category: "AI / ML",
     skills: [
-      "Docker",
-      "AWS (EC2/S3)",
-      "Model Inference Pipelines",
-      "Linux/Bash",
-      "CI/CD Pipelines",
-      "Git"
-    ]
-  },
-  {
-    category: "AI/ML",
-    skills: [
-      "TensorFlow",
       "PyTorch",
-      "Computer Vision (YOLO, ResNet)",
-      "NLP (spaCy, NER)",
-      "Deep Learning",
-      "Recommendation Systems"
+      "TensorFlow",
+      "Computer Vision (YOLOv8, ResNet-50, MobileNetV2)",
+      "NLP (spaCy NER)",
+      "RAG & Vector Search",
+      "LLM Integration (Tool Calling, Streaming)",
+      "XGBoost",
+      "scikit-learn"
     ]
   },
   {
-    category: "Developer Tools",
+    category: "Cloud & Infrastructure",
     skills: [
-      "Git",
-      "Unit Testing (JUnit, PyTest)",
-      "Maven/Gradle",
-      "VS Code",
-      "Debugging & Profiling"
+      "Docker / Compose",
+      "AWS (EC2, S3)",
+      "Cloudflare Workers & Durable Objects",
+      "Supabase",
+      "Vercel",
+      "GitHub Actions CI/CD",
+      "Linux"
+    ]
+  },
+  {
+    category: "Mobile & Frontend",
+    skills: [
+      "SwiftUI / UIKit",
+      "React",
+      "Next.js",
+      "Tailwind CSS",
+      "React Three Fiber",
+      "Unity (C#)"
+    ]
+  },
+  {
+    category: "Engineering Practice",
+    skills: [
+      "Git & PR Review Workflow",
+      "Feature Flags",
+      "pytest / JUnit",
+      "Maven",
+      "Profiling & Benchmarking",
+      "Agile"
     ]
   }
 ];

@@ -1,26 +1,29 @@
 export const siteMetadata = {
   name: "Kunj Pandya",
-  title: "Full-Stack Engineer & Entrepreneur",
-  description: "Building scalable backend systems and intelligent applications. MS CS student at Stevens Institute of Technology with expertise in distributed systems, microservices architecture, and cloud infrastructure.",
+  title: "Software Engineer · Distributed Systems & Applied ML",
+  tagline: "I build distributed systems from their primitives and ML systems that ship: a hand-built Chord DHT with gRPC event streaming, production NLP at 10K+ requests a day, and retrieval on Cloudflare's edge.",
+  availability: "MS CS @ Stevens, May 2027 · Open to new-grad SWE and ML roles",
+  description: "Kunj Pandya is a software engineer finishing an MS in Computer Science at Stevens Institute of Technology (May 2027), working across distributed systems, backend engineering, and applied ML.",
   url: "https://kunjpandya.vercel.app/",
   email: "kunjspandya@gmail.com",
   github: "https://github.com/kpandya1903",
-  linkedin: "https://linkedin.com/in/kpandya7", 
-  location: "Hoboken, NJ",
+  linkedin: "https://linkedin.com/in/kpandya7",
+  location: "Hoboken, NJ · Open to relocation",
   bio: [
-    "Full-stack engineer and aspiring entrepreneur passionate about building scalable systems that solve real-world problems.",
-    "Currently pursuing MS in Computer Science at Stevens Institute of Technology while architecting distributed backend systems, microservices, and cloud-native applications.",
-    "From building distributed task orchestrators handling 10K+ tasks/day to creating AI-powered platforms serving 500+ users, I focus on turning ideas into production-ready solutions that scale."
+    "I'm a software engineer finishing an MS in Computer Science at Stevens Institute of Technology (May 2027), after a B.Tech in Artificial Intelligence and Machine Learning from D.J. Sanghvi College of Engineering in Mumbai. I'm looking for new-grad software and ML engineering roles starting in mid-2027.",
+    "I like building systems from their primitives. I implemented a Chord DHT by hand and layered gRPC event streaming on top of it, built a task orchestrator that holds up against starvation and retry storms under burst load, and designed a document pipeline where every generated claim has to resolve to its source or the build fails.",
+    "Today I build AI-assistant features for Fini's iOS app in Swift and SwiftUI, shipping through senior-reviewed pull requests. Before that I owned the backend of a placement platform at D.J. Sanghvi that served 500+ students at 10K+ requests a day, and I co-authored a peer-reviewed paper on AI ingredient recognition."
   ],
   keywords: [
     "Kunj Pandya",
-    "Full Stack Developer",
+    "Software Engineer",
     "Backend Engineer",
+    "Machine Learning Engineer",
     "Distributed Systems",
-    "Microservices",
-    "Entrepreneur",
-    "Cloud Architecture",
-    "System Design",
-    "Scalable Infrastructure"
+    "Chord DHT",
+    "gRPC",
+    "RAG",
+    "Stevens Institute of Technology",
+    "New Grad 2027"
   ]
 };

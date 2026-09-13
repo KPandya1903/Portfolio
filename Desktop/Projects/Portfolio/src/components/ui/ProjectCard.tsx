@@ -3,7 +3,8 @@
 import React, { useRef, useState } from "react";
 import { Project } from "@/types";
 import { SkillBadge } from "./SkillBadge";
-import { FaGithub } from "react-icons/fa";
+import { FaGithub, FaLock } from "react-icons/fa";
+import { HiExternalLink } from "react-icons/hi";
 import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
@@ -121,8 +122,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
       </div>
 
-      {/* GitHub Link */}
-      <div className="mt-auto pt-4 border-t border-accent-cream">
+      {/* Links */}
+      <div className="mt-auto pt-4 border-t border-accent-cream flex flex-wrap items-center gap-x-6 gap-y-2">
         {project.githubRepo && (
           <a
             href={`https://github.com/${project.githubRepo}`}
@@ -133,6 +134,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <FaGithub className="w-4 h-4" />
             View on GitHub
           </a>
+        )}
+        {project.liveUrl && (
+          <a
+            href={project.liveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-accent-primary hover:text-accent-hover transition-colors"
+          >
+            <HiExternalLink className="w-4 h-4" />
+            Live Demo
+          </a>
+        )}
+        {project.privateRepo && (
+          <span className="inline-flex items-center gap-2 text-sm text-text-secondary">
+            <FaLock className="w-3.5 h-3.5" />
+            Private repository
+          </span>
         )}
       </div>
     </div>
