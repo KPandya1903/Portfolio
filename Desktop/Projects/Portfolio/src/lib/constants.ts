@@ -1,6 +1,7 @@
 export const GITHUB_API_URL = "https://api.github.com/graphql";
 
 export const NAV_LINKS = [
+  { label: "Journey", href: "#journey" },
   { label: "About", href: "#about" },
   { label: "Experience", href: "#experience" },
   { label: "Projects", href: "#projects" },

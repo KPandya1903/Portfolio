@@ -42,6 +42,29 @@ export interface Achievement {
   date: string;
 }
 
+export type TimelineCategory =
+  | "education"
+  | "experience"
+  | "research"
+  | "project"
+  | "award"
+  | "milestone";
+
+export interface TimelineEntry {
+  id: string;
+  category: TimelineCategory;
+  start: string; // "YYYY-MM"
+  end?: string; // "YYYY-MM" or "present"
+  title: string;
+  org: string;
+  description: string;
+  tags: string[];
+  githubRepo?: string;
+  liveUrl?: string;
+  privateRepo?: boolean;
+  short?: string; // name shown in the "today" card while the entry is running
+}
+
 export interface SkillCategory {
   category: string;
   skills: string[];
