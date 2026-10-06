@@ -57,7 +57,7 @@ test("reserves the rail on wide screens", async ({ page }) => {
 test.describe("phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
   test("docks bottom-left and keeps content full width", async ({ page }) => {
-  needsWebGL();
+    needsWebGL();
     await page.goto("/");
     await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
@@ -70,7 +70,7 @@ test.describe("phone", () => {
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("skips the intro but still speaks", async ({ page }) => {
-  needsWebGL();
+    needsWebGL();
     await page.goto("/");
     await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done");
@@ -91,12 +91,21 @@ test("guide can be turned off and stays off", async ({ page }) => {
 });
 
 test("degrades gracefully without WebGL", async ({ page }) => {
-  test.skip(hasWebGL2, "only meaningful in a browser without WebGL2");
+  // Remove WebGL2 only; the app's own hasWebGL() detection must notice. Other context types pass through.
+  await page.addInitScript(() => {
+    const orig = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+      if (type === "webgl2") return null;
+      return (orig as (...a: unknown[]) => unknown).call(this, type, ...rest);
+    } as typeof orig;
+  });
   await page.goto("/");
   await expect(html(page)).toHaveAttribute("data-guide", "off");
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
+  await page.waitForTimeout(1500); // catch a late mount
+  await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
 
 test("a failed model load removes the guide and frees the rail", async ({ page }) => {
