@@ -42,11 +42,21 @@ export function primeGuideState(
   webgl: () => boolean = hasWebGL,
 ) {
   const reduced = matches(REDUCED_QUERY);
+  const canRender = webgl();
+  // No WebGL is not the visitor's choice: free the rail without persisting anything.
+  if (!canRender) document.documentElement.dataset.guide = "off";
   store.set({
-    enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && webgl(),
+    enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && canRender,
     mode: matches(WIDE_QUERY) ? "wide" : "compact",
     reducedMotion: reduced,
   });
   if (reduced) store.dispatchIntro("REDUCED_MOTION");
   else if (readStorage("session", INTRO_SEEN_KEY) === "1") store.dispatchIntro("ALREADY_SEEN");
+}
+
+/** A crashed guide reads as off: intro done, rail freed, nothing persisted (docs/04 §8). */
+export function failGuide(store: GuideStore = guideStore) {
+  store.dispatchIntro("FAILED");
+  store.set({ enabled: false });
+  document.documentElement.dataset.guide = "off";
 }

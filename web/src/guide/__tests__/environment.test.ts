@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GUIDE_ENABLED_KEY,
+  failGuide,
   hasWebGL,
   INTRO_SEEN_KEY,
   primeGuideState,
@@ -15,6 +16,7 @@ import { createGuideStore, INITIAL_STATE } from "../store";
 const matching = (...queries: string[]) => (q: string) => queries.includes(q);
 
 beforeEach(() => {
+  delete document.documentElement.dataset.guide;
   localStorage.clear();
   sessionStorage.clear();
 });
@@ -94,5 +96,26 @@ describe("primeGuideState", () => {
     const store = createGuideStore();
     primeGuideState(store, matching(WIDE_QUERY), () => false);
     expect(store.getState().enabled).toBe(false);
+  });
+
+  it("frees the rail without remembering a choice when WebGL is missing", () => {
+    primeGuideState(createGuideStore(), matching(WIDE_QUERY), () => false);
+    expect(document.documentElement.dataset.guide).toBe("off");
+    expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
+  });
+
+  it("leaves the rail reserved when WebGL is available", () => {
+    primeGuideState(createGuideStore(), matching(WIDE_QUERY), yesWebGL);
+    expect(document.documentElement.dataset.guide).toBeUndefined();
+  });
+});
+
+describe("failGuide", () => {
+  it("finishes the intro, turns the guide off and frees the rail without persisting", () => {
+    const store = createGuideStore({ ...INITIAL_STATE, enabled: true, intro: "hello" });
+    failGuide(store);
+    expect(store.getState()).toMatchObject({ enabled: false, intro: "done" });
+    expect(document.documentElement.dataset.guide).toBe("off");
+    expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
   });
 });

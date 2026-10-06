@@ -7,6 +7,7 @@ function PauseWhenHidden() {
   const setFrameloop = useThree((s) => s.setFrameloop);
   useEffect(() => {
     const onVisibility = () => setFrameloop(document.hidden ? "never" : "always");
+    onVisibility();
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [setFrameloop]);
@@ -23,6 +24,7 @@ export function GuideCanvas() {
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
       style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none" }}
       aria-hidden="true"
+      tabIndex={-1}
       data-testid="guide-canvas"
     >
       <hemisphereLight args={["#FFF4EA", "#5D4037", 1.1]} />

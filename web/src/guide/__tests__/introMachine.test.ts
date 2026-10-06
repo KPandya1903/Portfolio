@@ -21,6 +21,11 @@ describe("introReducer", () => {
     expect(run(["LOAD_TIMEOUT"])).toBe("done");
     expect(run(["MODEL_READY", "LOAD_TIMEOUT"])).toBe("hello");
   });
+  it("ends the intro from any phase when the guide fails", () => {
+    expect(run(["FAILED"])).toBe("done");
+    expect(run(["MODEL_READY", "FAILED"])).toBe("done");
+    expect(run(["MODEL_READY", "HELLO_DONE", "FAILED"])).toBe("done");
+  });
   it("ignores events that don't apply", () => {
     expect(run(["HELLO_DONE"])).toBe("pending");
     expect(run(["ARRIVED"])).toBe("pending");

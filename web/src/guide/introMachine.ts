@@ -6,6 +6,7 @@ export type IntroEvent =
   | "ARRIVED"
   | "LEFT_HERO"
   | "LOAD_TIMEOUT"
+  | "FAILED"
   | "ALREADY_SEEN"
   | "REDUCED_MOTION";
 
@@ -16,6 +17,7 @@ export function introReducer(phase: IntroPhase, event: IntroEvent): IntroPhase {
     case "ALREADY_SEEN":
     case "REDUCED_MOTION":
     case "LEFT_HERO":
+    case "FAILED":
       return "done";
     case "LOAD_TIMEOUT":
       return phase === "pending" ? "done" : phase;

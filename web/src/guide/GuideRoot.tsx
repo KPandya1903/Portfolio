@@ -1,9 +1,10 @@
 "use client";
 import { Component, useEffect, type ReactNode } from "react";
 import { SECTION_IDS } from "./config";
+import { failGuide } from "./environment";
 import { GuideCanvas } from "./GuideCanvas";
 import { SpeechBubble } from "./SpeechBubble";
-import { guideStore, useGuide } from "./store";
+import { useGuide } from "./store";
 import { useActiveSection } from "./useActiveSection";
 import { useGuideEnvironment } from "./useGuideEnvironment";
 import { useIntroSequence } from "./useIntroSequence";
@@ -15,7 +16,7 @@ class GuideErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
     return { failed: true };
   }
   componentDidCatch() {
-    guideStore.dispatchIntro("LOAD_TIMEOUT");
+    failGuide();
   }
   render() {
     return this.state.failed ? null : this.props.children;
