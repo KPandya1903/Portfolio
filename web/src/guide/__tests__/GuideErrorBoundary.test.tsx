@@ -26,7 +26,7 @@ describe("GuideErrorBoundary", () => {
         <Boom />
       </GuideErrorBoundary>,
     );
-    expect(store.getState()).toMatchObject({ enabled: false, intro: "done" });
+    expect(store.getState()).toMatchObject({ enabled: false, available: false, intro: "done" });
     expect(document.documentElement.dataset.guide).toBe("off");
     expect(localStorage.getItem("guide:enabled")).toBeNull();
   });

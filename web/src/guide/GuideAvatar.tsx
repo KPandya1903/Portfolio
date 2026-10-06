@@ -16,7 +16,7 @@ import type { ClipName } from "./types";
 import { useTargetCenter } from "./useTargetCenter";
 
 const ARRIVE_PX = 4;
-const MAX_YAW = 0.6; // rad (~34°), inside the ±70° limit in docs/02 §5
+const MAX_YAW = 0.6; // rad (~34°): the body turns a fixed amount toward the target side (docs/02 §5)
 const MAX_HEAD_YAW = (40 * Math.PI) / 180; // docs/02 §5
 const MAX_HEAD_PITCH = (20 * Math.PI) / 180;
 // Axis conventions depend on the rig's bone orientation; flip these when a new model looks the wrong way.

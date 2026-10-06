@@ -123,7 +123,7 @@ describe("failGuide", () => {
   it("finishes the intro, turns the guide off and frees the rail without persisting", () => {
     const store = createGuideStore({ ...INITIAL_STATE, enabled: true, intro: "hello" });
     failGuide(store);
-    expect(store.getState()).toMatchObject({ enabled: false, intro: "done" });
+    expect(store.getState()).toMatchObject({ enabled: false, available: false, intro: "done" });
     expect(document.documentElement.dataset.guide).toBe("off");
     expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
   });

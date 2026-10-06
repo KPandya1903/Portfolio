@@ -61,9 +61,9 @@ export function primeGuideState(
   else if (readStorage("session", INTRO_SEEN_KEY) === "1") store.dispatchIntro("ALREADY_SEEN");
 }
 
-/** A crashed guide reads as off: intro done, rail freed, nothing persisted (docs/04 §8). */
+/** A crashed guide reads as off and hides the toggle (a cached failed load makes retry futile): intro done, rail freed, nothing persisted (docs/04 §8). */
 export function failGuide(store: GuideStore = guideStore) {
   store.dispatchIntro("FAILED");
-  store.set({ enabled: false });
+  store.set({ enabled: false, available: false });
   setRailFreed(true);
 }
