@@ -5,8 +5,13 @@ import { guideStore, useGuide, type GuideStore } from "./store";
 
 const REFRESH_MS = 100;
 const snapshot = () => ({ ...debugInfo });
+type Info = ReturnType<typeof snapshot>;
+const KEYS = Object.keys(debugInfo) as (keyof Info)[];
+/** Same text on screen: strings equal, numbers equal once rounded. */
+const sameDisplay = (a: Info, b: Info) =>
+  KEYS.every((k) => (typeof a[k] === "number" ? Math.round(a[k]) === Math.round(b[k] as number) : a[k] === b[k]));
 
-/** Dev-only readout (docs/04 §9), shown with `?guideDebug=1`. Per-frame values are polled, not React state. */
+/** Dev-only readout (x/y/height are the avatar now; "target" is where it is heading) (docs/04 §9), shown with `?guideDebug=1`. Per-frame values are polled, not React state. */
 export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
   const section = useGuide((s) => s.section, store);
   const intro = useGuide((s) => s.intro, store);
@@ -15,7 +20,10 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
   const [info, setInfo] = useState(snapshot);
 
   useEffect(() => {
-    const id = setInterval(() => setInfo(snapshot()), REFRESH_MS);
+    const id = setInterval(() => setInfo((prev) => {
+        const next = snapshot();
+        return sameDisplay(prev, next) ? prev : next;
+      }), REFRESH_MS);
     return () => clearInterval(id);
   }, []);
 
@@ -26,9 +34,12 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
     ["reduced motion", reducedMotion ? "yes" : "no"],
     ["clip", info.clip || "-"],
     ["stop", info.stopId || "-"],
-    ["anchor x", Math.round(info.anchorX)],
-    ["anchor y", Math.round(info.anchorY)],
-    ["height px", Math.round(info.heightPx)],
+    ["target x", Math.round(info.anchorX)],
+    ["target y", Math.round(info.anchorY)],
+    ["target height", Math.round(info.heightPx)],
+    ["x", Math.round(info.x)],
+    ["y", Math.round(info.y)],
+    ["height", Math.round(info.curHeightPx)],
   ];
 
   return (
@@ -39,7 +50,7 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
         position: "fixed",
         right: 8,
         bottom: 8,
-        zIndex: 2147483000,
+        zIndex: 9999, // above all app layers (navbar 50)
         pointerEvents: "none",
         font: "10px/1.4 ui-monospace, monospace",
         background: "rgba(0,0,0,0.75)",

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SECTION_IDS } from "./config";
 import { GuideCanvas } from "./GuideCanvas";
 import { GuideDebug } from "./GuideDebug";
@@ -14,6 +14,13 @@ export default function GuideRoot() {
   useGuideEnvironment();
   useActiveSection(SECTION_IDS);
   useIntroSequence();
+
+  // Read once. Touching window here is safe only because GuideRoot is client-only (loaded with ssr:false).
+  // The literal NODE_ENV check is required for dead-code elimination in production; do not move it
+  // into shouldShowDebug or a shared constant.
+  const [showDebug] = useState(
+    () => process.env.NODE_ENV !== "production" && shouldShowDebug(process.env.NODE_ENV, window.location.search),
+  );
 
   const section = useGuide((s) => s.section);
   useEffect(() => {
@@ -31,8 +38,7 @@ export default function GuideRoot() {
     <>
       <GuideCanvas />
       <SpeechBubble />
-      {process.env.NODE_ENV !== "production" &&
-        shouldShowDebug(process.env.NODE_ENV, window.location.search) && <GuideDebug />}
+      {process.env.NODE_ENV !== "production" && showDebug && <GuideDebug />}
     </>
   );
 }

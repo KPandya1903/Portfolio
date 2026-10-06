@@ -170,12 +170,17 @@ export function GuideAvatar() {
     bubbleAnchor.x = avatarPx.x;
     bubbleAnchor.top = avatarPx.y - heightPx / 2;
     bubbleAnchor.visible = true;
+    // The literal NODE_ENV check is required for dead-code elimination in production; do not move it
+    // into shouldShowDebug or a shared constant.
     if (process.env.NODE_ENV !== "production") {
       debugInfo.clip = current.current ?? "";
       debugInfo.stopId = stop.id;
       debugInfo.anchorX = anchor.x;
       debugInfo.anchorY = anchor.y;
       debugInfo.heightPx = anchor.heightPx;
+      debugInfo.x = avatarPx.x;
+      debugInfo.y = avatarPx.y;
+      debugInfo.curHeightPx = heightPx;
     }
   });
 

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:prod-strip": "! grep -rqE \"guide-debug|guideDebug\" out",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
