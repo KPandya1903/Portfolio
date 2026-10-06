@@ -58,10 +58,10 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
 export type GuideStore = ReturnType<typeof createGuideStore>;
 export const guideStore = createGuideStore();
 
-export function useGuide<T>(selector: (s: GuideState) => T): T {
+export function useGuide<T>(selector: (s: GuideState) => T, store: GuideStore = guideStore): T {
   return useSyncExternalStore(
-    guideStore.subscribe,
-    () => selector(guideStore.getState()),
+    store.subscribe,
+    () => selector(store.getState()),
     () => selector(INITIAL_STATE),
   );
 }
