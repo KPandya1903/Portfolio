@@ -346,7 +346,7 @@ import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
 
 const corpus = JSON.stringify({ siteMetadata, experiences, projects, skills });
-const numbersIn = (s: string) => s.match(/\d[\d,.]*(?:K\+|\+|%)?/g) ?? [];
+const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)*(?:K\+|\+|%)?/g) ?? [];
 
 describe("guide config", () => {
   it("has exactly one stop per guided section, in page order", () => {
