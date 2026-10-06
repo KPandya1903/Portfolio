@@ -6,6 +6,7 @@ import { easing } from "maath";
 import * as THREE from "three";
 import { pxToWorld, resolveAnchor, worldToPx, yawToward } from "./anchors";
 import { bubbleAnchor } from "./bubbleAnchor";
+import { debugInfo } from "./debugInfo";
 import { nextClip } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
 import { flashHighlight } from "./highlight";
@@ -169,6 +170,13 @@ export function GuideAvatar() {
     bubbleAnchor.x = avatarPx.x;
     bubbleAnchor.top = avatarPx.y - heightPx / 2;
     bubbleAnchor.visible = true;
+    if (process.env.NODE_ENV !== "production") {
+      debugInfo.clip = current.current ?? "";
+      debugInfo.stopId = stop.id;
+      debugInfo.anchorX = anchor.x;
+      debugInfo.anchorY = anchor.y;
+      debugInfo.heightPx = anchor.heightPx;
+    }
   });
 
   return (

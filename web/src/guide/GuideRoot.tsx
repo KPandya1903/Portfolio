@@ -2,6 +2,8 @@
 import { useEffect } from "react";
 import { SECTION_IDS } from "./config";
 import { GuideCanvas } from "./GuideCanvas";
+import { GuideDebug } from "./GuideDebug";
+import { shouldShowDebug } from "./shouldShowDebug";
 import { SpeechBubble } from "./SpeechBubble";
 import { useGuide } from "./store";
 import { useActiveSection } from "./useActiveSection";
@@ -29,6 +31,8 @@ export default function GuideRoot() {
     <>
       <GuideCanvas />
       <SpeechBubble />
+      {process.env.NODE_ENV !== "production" &&
+        shouldShowDebug(process.env.NODE_ENV, window.location.search) && <GuideDebug />}
     </>
   );
 }
