@@ -19,7 +19,7 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
   const ref = useRef<HTMLDivElement>(null);
   // Keep the last line mounted while it fades out (docs/02 §5); reduced motion drops it at once.
   const { shown: bubble, leaving } = usePresence(storeBubble, reduced ? 0 : EXIT_MS);
-  const { text, finish } = useTypewriter(bubble?.text ?? "", bubble?.key ?? 0, reduced ? Infinity : TYPE_CPS);
+  const { text, finish } = useTypewriter(bubble?.text ?? "", bubble?.key ?? 0, reduced ? Infinity : leaving ? 0 : TYPE_CPS);
   const width = mode === "wide" ? 248 : 220;
 
   // Follow the avatar's head every frame without React re-renders.
@@ -59,6 +59,7 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
       {/* The outer element's transform is rewritten every frame, so the visible box and its animation live on this wrapper. */}
       <div
         key={bubble.key}
+        inert={leaving}
         className={`relative ${BOX} ${reduced ? "" : leaving ? "guide-bubble-out" : "guide-bubble-in"}`}
       >
         {text}

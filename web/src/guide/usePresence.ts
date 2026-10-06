@@ -11,6 +11,9 @@ export function usePresence<T>(value: T | null, exitMs: number): { shown: T | nu
   const [held, setHeld] = useState<{ value: T | null; expired: boolean }>({ value, expired: false });
   if (value !== null && (held.value !== value || held.expired)) setHeld({ value, expired: false });
 
+  // With no exit window the hold ends here, so a later exitMs change cannot bring the value back.
+  if (value === null && exitMs <= 0 && held.value !== null) setHeld({ value: null, expired: false });
+
   const holding = value === null && held.value !== null && !held.expired && exitMs > 0;
 
   useEffect(() => {

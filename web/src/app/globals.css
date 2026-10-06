@@ -77,6 +77,10 @@ html[data-guide-intro="hello"] #hero > * {
 .guide-bubble-in {
   animation: guide-bubble-in 180ms ease-out both;
 }
+/* Dismissing within 180 ms of entering snaps to full opacity before fading (accepted, cosmetic). */
+[data-state="leaving"] {
+  pointer-events: none;
+}
 .guide-bubble-out {
   animation: guide-bubble-out 120ms ease-in both;
 }

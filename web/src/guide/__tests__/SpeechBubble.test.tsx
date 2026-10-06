@@ -109,17 +109,53 @@ describe("SpeechBubble in and out", () => {
     expect(bubble()).toBeNull();
   });
 
+  it("freezes the typewriter while leaving", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    act(() => store.say("A rather long line to type."));
+    act(() => void vi.advanceTimersByTime(200));
+    act(() => store.set({ bubble: null }));
+    const frozen = bubble()?.textContent;
+    expect(frozen).toBeTruthy();
+    act(() => void vi.advanceTimersByTime(100));
+    expect(bubble()?.textContent).toBe(frozen);
+  });
+
+  it("does not take input while leaving", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    expect(inner().hasAttribute("inert")).toBe(false);
+    act(() => store.set({ bubble: null }));
+    expect(inner().hasAttribute("inert")).toBe(true);
+  });
+
+  it("fires its compact auto-hide only once while leaving", () => {
+    store.set({ mode: "compact", reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    act(() => void vi.advanceTimersByTime(5000));
+    expect(bubble()).not.toBeNull();
+    const spy = vi.spyOn(store, "set");
+    act(() => void vi.advanceTimersByTime(5000));
+    expect(spy).not.toHaveBeenCalled();
+    expect(bubble()).toBeNull();
+  });
+
   it("shows a new line at once during the leave window, with no leaving state", () => {
     store.set({ reducedMotion: false });
     render(<SpeechBubble store={store} />);
     say("Hi");
+    const before = inner();
     act(() => store.set({ bubble: null }));
     act(() => store.say("Again"));
+    expect(inner()).not.toBe(before);
     expect(screen.getByTestId("guide-bubble").getAttribute("data-state")).toBeNull();
     expect(inner().className).toContain("guide-bubble-in");
   });
 
   it("disappears at once under reduced motion, with no animation class", () => {
+    store.set({ reducedMotion: true }); // explicit: beforeEach already sets it
     render(<SpeechBubble store={store} />);
     say("Hi");
     expect(inner().className).not.toContain("guide-bubble-in");

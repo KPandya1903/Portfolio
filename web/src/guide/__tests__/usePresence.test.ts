@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePresence } from "../usePresence";
 
@@ -46,6 +47,38 @@ describe("usePresence", () => {
 
   it("is null and not leaving when it never had a value", () => {
     const { result } = setup(null);
+    expect(result.current).toEqual({ shown: null, leaving: false });
+  });
+
+  it("does not resurrect a dropped value when exitMs later grows", () => {
+    const { result, rerender } = renderHook(({ v, ms }: { v: string | null; ms: number }) => usePresence(v, ms), {
+      initialProps: { v: "a" as string | null, ms: 0 },
+    });
+    rerender({ v: null, ms: 0 });
+    rerender({ v: null, ms: 120 });
+    expect(result.current).toEqual({ shown: null, leaving: false });
+  });
+
+  it("gives a second exit a full exitMs of its own", () => {
+    const { result, rerender } = setup("a");
+    rerender({ v: null });
+    act(() => void vi.advanceTimersByTime(120));
+    rerender({ v: "b" });
+    rerender({ v: null });
+    act(() => void vi.advanceTimersByTime(119));
+    expect(result.current).toEqual({ shown: "b", leaving: true });
+    act(() => void vi.advanceTimersByTime(1));
+    expect(result.current).toEqual({ shown: null, leaving: false });
+  });
+
+  it("behaves the same under StrictMode", () => {
+    const { result, rerender } = renderHook(({ v }: { v: string | null }) => usePresence(v, 120), {
+      initialProps: { v: "a" as string | null },
+      wrapper: StrictMode,
+    });
+    rerender({ v: null });
+    expect(result.current).toEqual({ shown: "a", leaving: true });
+    act(() => void vi.advanceTimersByTime(120));
     expect(result.current).toEqual({ shown: null, leaving: false });
   });
 
