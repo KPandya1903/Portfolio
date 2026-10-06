@@ -1667,4 +1667,12 @@ Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updat
 - `11eee6b` feat(guide): add a dev-only `?guideDebug=1` overlay. Shows section, intro, clip and anchor values.
 - `3992040` refactor(guide): harden debug overlay stripping and readout. Literal `NODE_ENV` checks at the call sites; `check:prod-strip` verifies `out/`.
 
-Review finding IDs (S1 to S14) are not recorded in the commit messages, so they are not mapped here.
+Review findings by commit:
+
+| Findings | Commits | What |
+|---|---|---|
+| S5, S7, S11, S13 | `52896a1`, `6b450c9` | Failure handling: rail freed without WebGL and on a crash, `FAILED` event, canvas `tabIndex`, hidden-tab pause; boundary moved into `GuideLoader`, `setRailFreed`, `available` |
+| S3, S1 | `0d685ca`, `56dcc9b` | Cached target centre; head look |
+| S2 | `5cd1d3f`, `9a067b6`, `93b0abb`, `c646da7` | Bubble enter/exit; whole box animates; frozen text, inert, reduced-motion toggle; tests |
+| S4 | `11eee6b`, `3992040` | Dev-only debug overlay; automated `check:prod-strip` |
+| S6, S8, S9, S10, S12, S14 | `b3af3ec` | Docs aligned with the implementation |

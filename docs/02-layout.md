@@ -132,7 +132,7 @@ directional light `#FFE2CC` from upper right. No shadows (performance, [04](04-s
 | Motion | Duration / curve | Source of the idea |
 |---|---|---|
 | Avatar travel between anchors | `maath` `damp3`, smoothTime 0.35 s | [R2.5](01-references.md) frame-rate-independent damping |
-| Avatar yaw toward target | `dampE`, 0.25 s, clamp ±70° | [R4.4](01-references.md) per-section rotation |
+| Avatar yaw toward target | Body turns a fixed 0.6 rad (~34°) toward the target's side (sign only, 0 without a target), `dampE` 0.25 s | [R4.4](01-references.md) per-section rotation |
 | Head toward target | `damp` smoothTime 0.15 s on yaw/pitch, clamp yaw ±40°, pitch ±20° | [R2.8](01-references.md), [R1.6](01-references.md) |
 | Clip crossfade | 0.3 s | [R1.5](01-references.md) used 0.5 s |
 | Bubble in / out | opacity + 6 px rise, 180 ms ease-out / 120 ms ease-in; on exit the bubble stays mounted for 120 ms, inert, with its text frozen (no exit under reduced motion) | — |

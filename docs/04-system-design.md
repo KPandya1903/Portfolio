@@ -32,7 +32,8 @@ probe) from `GuideLoader`'s mount effect. Without WebGL the chunk is never reque
 6. moving = distance(group.position, targetWorld) > 4 px
 7. if (!moving && intro is not pending/hello && stop.id !== arrivedAt) {
      store.arrive(stop); refresh target centre; flashHighlight(stop.target) }
-8. yaw: yawToward(targetCentre.x, avatar px x, 0.6 rad) → dampE 0.25 s (snaps under reduced motion).
+8. yaw: yawToward(targetCentre.x, avatar px x, 0.6 rad) = sign(target side) × 0.6 rad (~34°, a fixed turn, not
+   proportional) → dampE 0.25 s (snaps under reduced motion).
    targetCentre is the cached value from useTargetCenter: measured when the stop changes and on arrival,
    refreshed on passive scroll / resize at most once per frame. The loop does no layout reads. Null during the
    intro or when the stop has no target → face forward.
