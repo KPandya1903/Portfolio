@@ -1,4 +1,4 @@
-import { guideStore } from "./store";
+import { guideStore, type GuideStore } from "./store";
 
 export const WIDE_QUERY = "(min-width: 1280px)";
 export const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
@@ -33,14 +33,20 @@ export function hasWebGL(): boolean {
   }
 }
 
+const mediaMatches = (query: string) => window.matchMedia(query).matches;
+
 /** Called once before the guide chunk mounts, so a returning session never flashes the intro. */
-export function primeGuideState() {
-  const reduced = window.matchMedia(REDUCED_QUERY).matches;
-  guideStore.set({
-    enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && hasWebGL(),
-    mode: window.matchMedia(WIDE_QUERY).matches ? "wide" : "compact",
+export function primeGuideState(
+  store: GuideStore = guideStore,
+  matches: (query: string) => boolean = mediaMatches,
+  webgl: () => boolean = hasWebGL,
+) {
+  const reduced = matches(REDUCED_QUERY);
+  store.set({
+    enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && webgl(),
+    mode: matches(WIDE_QUERY) ? "wide" : "compact",
     reducedMotion: reduced,
   });
-  if (reduced) guideStore.dispatchIntro("REDUCED_MOTION");
-  else if (readStorage("session", INTRO_SEEN_KEY) === "1") guideStore.dispatchIntro("ALREADY_SEEN");
+  if (reduced) store.dispatchIntro("REDUCED_MOTION");
+  else if (readStorage("session", INTRO_SEEN_KEY) === "1") store.dispatchIntro("ALREADY_SEEN");
 }
