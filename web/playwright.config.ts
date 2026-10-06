@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// `npm run build` must run first (serves out/). The port must be free in CI; locally an existing server is reused.
+const PORT = process.env.E2E_PORT ?? "4173";
+const BASE = `http://localhost:${PORT}`;
 const viewport = { width: 1440, height: 900 };
 
 export default defineConfig({
@@ -9,8 +12,9 @@ export default defineConfig({
   // The guide renders WebGL in software, which is CPU-bound: parallel workers starve each other and flake.
   workers: 1,
   fullyParallel: false,
-  use: { baseURL: "http://localhost:4173" },
-  webServer: { command: "npx serve out -l 4173", url: "http://localhost:4173", reuseExistingServer: !process.env.CI },
+  failOnFlakyTests: !!process.env.CI,
+  use: { baseURL: BASE, trace: "on-first-retry" },
+  webServer: { command: `npx serve out -l ${PORT}`, url: BASE, reuseExistingServer: !process.env.CI },
   projects: [
     {
       name: "chromium",

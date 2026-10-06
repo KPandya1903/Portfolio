@@ -1,11 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readIntroPhases, recordIntroPhases } from "./helpers";
+
+// GuideLoader mounts the canvas from requestIdleCallback (timeout 2000 ms) or a 1200 ms setTimeout fallback.
+// Absence checks must wait past that, or they pass before a wrongly-mounting guide could appear.
+const IDLE_MOUNT_GRACE_MS = 2500;
 
 // The app degrades to "no guide" when a browser cannot create a WebGL2 context. Guide-behaviour tests need one.
 let hasWebGL2 = true;
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser }, testInfo) => {
   const page = await browser.newPage();
   hasWebGL2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
   await page.close();
+  // Never let the guide tests skip silently where WebGL2 is known to exist. Firefox/WebKit stay skippable until a CI
+  // run shows they have WebGL2 on ubuntu; then set E2E_REQUIRE_WEBGL=1 in ci.yml.
+  if (testInfo.project.name === "chromium" || process.env.E2E_REQUIRE_WEBGL) {
+    expect(hasWebGL2, "WebGL2 required for guide tests in this project").toBe(true);
+  }
 });
 const needsWebGL = () => test.skip(!hasWebGL2, "this browser cannot create a WebGL2 context headless; the guide degrades by design");
 
@@ -23,19 +33,15 @@ test("intro plays once per session", async ({ page }) => {
   await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 20_000 });
   await expect(bubble(page)).toContainText("My resume is right here", { timeout: 10_000 });
 
-  // Record whether the reloaded page ever enters "hello". Waiting for "done" alone is not enough:
-  // a replayed intro also reaches "done" a few seconds later.
-  // Init scripts run before <html> exists, so observe the document node with subtree.
-  await page.addInitScript(() => {
-    new MutationObserver(() => {
-      if (document.documentElement?.dataset.guideIntro === "hello") sessionStorage.setItem("test:saw-hello", "1");
-    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-guide-intro"] });
-  });
+  // A replayed intro would also reach "done" a few seconds later, so record every phase the reloaded page enters.
+  await recordIntroPhases(page);
   await page.reload();
   await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
   await expect(html(page)).toHaveAttribute("data-guide-intro", "done");
-  await page.waitForTimeout(1500); // the model loads after the canvas mounts; give a replay time to start
-  expect(await page.evaluate(() => sessionStorage.getItem("test:saw-hello"))).toBeNull();
+  const phases = await readIntroPhases(page);
+  expect(phases[0]).toBe("done");
+  expect(phases).not.toContain("pending");
+  expect(phases).not.toContain("hello");
 });
 
 test("points at each section while scrolling", async ({ page }) => {
@@ -71,9 +77,14 @@ test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("skips the intro but still speaks", async ({ page }) => {
     needsWebGL();
+    await recordIntroPhases(page);
     await page.goto("/");
     await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done");
+    const phases = await readIntroPhases(page);
+    expect(phases[0]).toBe("done");
+    expect(phases).not.toContain("pending");
+    expect(phases).not.toContain("hello");
     await expect(bubble(page)).toContainText("My resume is right here", { timeout: 10_000 });
   });
 });
@@ -86,7 +97,7 @@ test("guide can be turned off and stays off", async ({ page }) => {
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await page.reload();
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(IDLE_MOUNT_GRACE_MS);
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
 
@@ -104,19 +115,18 @@ test("degrades gracefully without WebGL", async ({ page }) => {
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
-  await page.waitForTimeout(1500); // catch a late mount
+  await page.waitForTimeout(IDLE_MOUNT_GRACE_MS); // catch a late mount
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
 
 test("a failed model load removes the guide and frees the rail", async ({ page }) => {
   needsWebGL();
   await page.route("**/*.glb", (r) => r.abort());
+  await recordIntroPhases(page);
   await page.goto("/");
   await expect(html(page)).toHaveAttribute("data-guide", "off", { timeout: 20_000 });
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
-  await expect(html(page)).not.toHaveAttribute("data-guide-intro", "hello");
-  await page.waitForTimeout(1500); // a late "hello" must not appear after the failure
-  await expect(html(page)).not.toHaveAttribute("data-guide-intro", "hello");
+  expect(await readIntroPhases(page)).not.toContain("hello"); // the hero was never dimmed
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
 });
