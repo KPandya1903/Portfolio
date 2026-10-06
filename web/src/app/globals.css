@@ -44,3 +44,40 @@
     display: none;
   }
 }
+
+/* ---- Avatar guide (docs/02-layout.md) ---- */
+@media (min-width: 1280px) {
+  html:not([data-guide="off"]) main {
+    padding-left: var(--rail-width);
+  }
+}
+
+#hero > * {
+  transition: opacity 400ms ease;
+}
+html[data-guide-intro="hello"] #hero > * {
+  opacity: 0.15;
+  transition-duration: 300ms;
+}
+
+.guide-highlight {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 4px;
+  border-radius: 8px;
+  animation: guide-pulse 0.8s ease-in-out 2;
+}
+@keyframes guide-pulse {
+  50% {
+    outline-offset: 8px;
+    outline-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #hero > * {
+    transition: none;
+  }
+  .guide-highlight {
+    animation: none;
+  }
+}
