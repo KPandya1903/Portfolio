@@ -1,5 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// The app degrades to "no guide" when a browser cannot create a WebGL2 context. Guide-behaviour tests need one.
+let hasWebGL2 = true;
+test.beforeAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  hasWebGL2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
+  await page.close();
+});
+const needsWebGL = () => test.skip(!hasWebGL2, "this browser cannot create a WebGL2 context headless; the guide degrades by design");
+
 const html = (page: Page) => page.locator("html");
 const bubble = (page: Page) => page.getByTestId("guide-bubble");
 const railPadding = (page: Page) => page.locator("section#skills");
@@ -7,6 +16,7 @@ const scrollToSection = (page: Page, id: string) =>
   page.evaluate((s) => document.getElementById(s)!.scrollIntoView({ block: "center" }), id);
 
 test("intro plays once per session", async ({ page }) => {
+  needsWebGL();
   await page.goto("/");
   await expect(html(page)).toHaveAttribute("data-guide-intro", "hello", { timeout: 20_000 });
   await expect(bubble(page)).toContainText("Hi, I'm Kunj", { timeout: 10_000 });
@@ -29,6 +39,7 @@ test("intro plays once per session", async ({ page }) => {
 });
 
 test("points at each section while scrolling", async ({ page }) => {
+  needsWebGL();
   await page.goto("/");
   await expect(html(page)).toHaveAttribute("data-guide-intro", /hello|done/, { timeout: 20_000 });
   await scrollToSection(page, "skills");
@@ -38,6 +49,7 @@ test("points at each section while scrolling", async ({ page }) => {
 });
 
 test("reserves the rail on wide screens", async ({ page }) => {
+  needsWebGL();
   await page.goto("/");
   await expect(railPadding(page)).toHaveCSS("padding-left", "280px");
 });
@@ -45,6 +57,7 @@ test("reserves the rail on wide screens", async ({ page }) => {
 test.describe("phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
   test("docks bottom-left and keeps content full width", async ({ page }) => {
+  needsWebGL();
     await page.goto("/");
     await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
@@ -57,6 +70,7 @@ test.describe("phone", () => {
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("skips the intro but still speaks", async ({ page }) => {
+  needsWebGL();
     await page.goto("/");
     await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done");
@@ -65,6 +79,7 @@ test.describe("reduced motion", () => {
 });
 
 test("guide can be turned off and stays off", async ({ page }) => {
+  needsWebGL();
   await page.goto("/");
   await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
   await page.getByRole("button", { name: /Guide on/ }).click();
@@ -73,4 +88,26 @@ test("guide can be turned off and stays off", async ({ page }) => {
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
   await page.waitForTimeout(3000);
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
+});
+
+test("degrades gracefully without WebGL", async ({ page }) => {
+  test.skip(hasWebGL2, "only meaningful in a browser without WebGL2");
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide", "off");
+  await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
+  await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
+});
+
+test("a failed model load removes the guide and frees the rail", async ({ page }) => {
+  needsWebGL();
+  await page.route("**/*.glb", (r) => r.abort());
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide", "off", { timeout: 20_000 });
+  await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
+  await expect(html(page)).not.toHaveAttribute("data-guide-intro", "hello");
+  await page.waitForTimeout(1500); // a late "hello" must not appear after the failure
+  await expect(html(page)).not.toHaveAttribute("data-guide-intro", "hello");
+  await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
 });

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
