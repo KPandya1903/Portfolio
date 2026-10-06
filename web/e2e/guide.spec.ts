@@ -13,9 +13,19 @@ test("intro plays once per session", async ({ page }) => {
   await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 20_000 });
   await expect(bubble(page)).toContainText("My resume is right here", { timeout: 10_000 });
 
+  // Record whether the reloaded page ever enters "hello". Waiting for "done" alone is not enough:
+  // a replayed intro also reaches "done" a few seconds later.
+  // Init scripts run before <html> exists, so observe the document node with subtree.
+  await page.addInitScript(() => {
+    new MutationObserver(() => {
+      if (document.documentElement?.dataset.guideIntro === "hello") sessionStorage.setItem("test:saw-hello", "1");
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-guide-intro"] });
+  });
   await page.reload();
   await expect(page.getByTestId("guide-canvas")).toHaveCount(1, { timeout: 20_000 });
   await expect(html(page)).toHaveAttribute("data-guide-intro", "done");
+  await page.waitForTimeout(1500); // the model loads after the canvas mounts; give a replay time to start
+  expect(await page.evaluate(() => sessionStorage.getItem("test:saw-hello"))).toBeNull();
 });
 
 test("points at each section while scrolling", async ({ page }) => {
