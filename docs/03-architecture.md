@@ -13,7 +13,7 @@
 | React renderer for three | @react-three/fiber | 9.8 | React 19 support. Same combo as [R3](01-references.md) |
 | 3D helpers | @react-three/drei | 10.7 | `useGLTF`, `useAnimations` only |
 | Easing | maath | 0.10 | `easing.damp3` / `dampE` ([ADR-0004](adr/0004-maath-over-framer-motion-3d.md)) |
-| Unit tests | Vitest | 5 | Pure guide logic |
+| Unit tests | Vitest | 5 | Pure guide logic, plus hooks and components via happy-dom and Testing Library |
 | E2E tests | Playwright | 1.63 | Intro, scroll, modes, reduced motion |
 | Asset tooling | @gltf-transform/cli | 4.5 | Via `npx`, not a dependency |
 
@@ -56,7 +56,7 @@ app/layout.tsx  (server; inline script sets html[data-guide="off"] before paint 
                   ├─ <GuideCanvas>            fixed, transparent, pointer-events:none, orthographic camera
                   │    └─ <Suspense fallback={null}>
                   │         └─ <GuideAvatar/>   GLB + clips, per-frame: anchor → damp → yaw → clip → head
-                  ├─ <SpeechBubble/>          DOM, positioned by the avatar's projected head each frame
+                  ├─ <SpeechBubble/>          DOM, positioned each frame from `bubbleAnchor` (avatar centre x, top of its scaled bounding box)
                   └─ <GuideDebug/>            dev only, `?guideDebug=1` ([04](04-system-design.md) §9)
 ```
 
@@ -98,7 +98,7 @@ portfolio-3d/
    │     ├─ introMachine.ts      pure: intro phase reducer
    │     ├─ look.ts              pure lookAngles; createHeadLook (head-bone offset)
    │     ├─ environment.ts       storage, WebGL check, primeGuideState, failGuide, setRailFreed
-   │     ├─ bubbleAnchor.ts      shared mutable head position (avatar writes, bubble reads)
+   │     ├─ bubbleAnchor.ts      shared mutable anchor: avatar centre x and top of its scaled bounding box (avatar writes, bubble reads)
    │     ├─ highlight.ts         flashHighlight (1.6 s ring)
    │     ├─ debugInfo.ts  shouldShowDebug.ts  GuideDebug.tsx   dev-only overlay
    │     ├─ useGuideEnvironment.ts  useActiveSection.ts  useIntroSequence.ts
@@ -153,15 +153,15 @@ export interface GuideState {
 
 `config.ts` holds `SECTION_IDS`, `GUIDE_STOPS: GuideStop[]` (one per section except `linkedin`, [06](06-guide-script.md)),
 `INTRO` (line, timings), `MODEL`, and `stopFor(sectionId)`, which returns the stop of the nearest earlier section
-(so `linkedin` uses the `projects` stop). Swapping the placeholder robot for Kunj's avatar changes only `MODEL`.
+(so `linkedin` uses the `projects` stop). Swapping the placeholder robot for Kunj's avatar changes `MODEL`; `HEAD_YAW_SIGN` / `HEAD_PITCH_SIGN` in `GuideAvatar.tsx` may also need flipping for a new rig.
 
 ## 6. State and data flow
 
-One store, written by three hooks, read by two components. This fixes R1's two-sources-of-truth defect.
+One store. Writers: `useActiveSection`, `useIntroSequence`, `useGuideEnvironment`, `GuideAvatar` (`arrive`, `markModelReady`), `SpeechBubble` (dismiss, compact auto-hide), `GuideToggle`, `primeGuideState`, `failGuide`. Readers: `GuideAvatar`, `SpeechBubble`, `GuideToggle`, `GuideLoader`, `GuideRoot`, `GuideDebug`, `useIntroSequence`. This fixes R1's two-sources-of-truth defect.
 
 ```
  IntersectionObserver ──▶ useActiveSection ──┐
- matchMedia / resize ───▶ useGuideEnvironment┼──▶ store (GuideState) ──▶ GuideAvatar (reads in useFrame via getState())
+ matchMedia change ─────▶ useGuideEnvironment┼──▶ store (GuideState) ──▶ GuideAvatar (reads in useFrame via getState())
  timers + store events ─▶ useIntroSequence ──┘                     └──▶ SpeechBubble (React subscription)
                                    ▲
  GuideAvatar ── "arrived at stop X" ┘   (store.arrive(stop) → sets bubble; the avatar adds the highlight class)
@@ -170,15 +170,15 @@ One store, written by three hooks, read by two components. This fixes R1's two-s
 Rules:
 - Per-frame code reads `store.getState()` and never calls `setState`; only discrete events write.
 - The store notifies subscribers only when a value changes (same as [R5.3](01-references.md)).
-- Timers, intervals and rAF loops exist only in the places below, and each one is cleared on unmount or when its phase or input changes:
+- In guide code, timers, intervals and rAF loops exist only in the places below (`Journey` and `ProjectCarousel` have their own). Each is cleared on unmount or when its phase or input changes, except the highlight ring's timeout, which removes its own class when it fires:
 
 | Where | What | Cleared by |
 |---|---|---|
 | `useIntroSequence` | `LOAD_TIMEOUT` (4 s) and `HELLO_DONE` (4 s) timeouts | effect cleanup; the hello timer also on phase change |
-| `SpeechBubble` | rAF loop following the head; 5 s compact auto-hide timeout | effect cleanup (`cancelAnimationFrame`, `clearTimeout`) |
+| `SpeechBubble` | rAF loop following `bubbleAnchor`; 5 s compact auto-hide timeout | effect cleanup (`cancelAnimationFrame`, `clearTimeout`) |
 | `useTypewriter` | `setInterval` at 35 chars/s | effect cleanup; also when the line is complete |
 | `usePresence` | 120 ms exit-hold timeout | effect cleanup |
-| `highlight.ts` | 1.6 s ring timeout, one per element | cleared and restarted if the same element is flashed again; removes the class itself when it fires |
+| `highlight.ts` | 1.6 s ring timeout, one per element | restarted if the same element is flashed again; not cleared on unmount, it removes the class itself when it fires |
 | `GuideLoader` | `requestIdleCallback`, or a 1200 ms timeout where it is missing | effect cleanup |
 | `useTargetCenter` | rAF throttle for scroll/resize re-measure | effect cleanup (`cancelAnimationFrame`) |
 | `GuideDebug` | 100 ms poll of `debugInfo` (dev only) | effect cleanup |
@@ -192,14 +192,14 @@ Rules:
 | `introMachine.ts` | yes | `introReducer(phase, event) → phase` for events `MODEL_READY`, `HELLO_DONE`, `ARRIVED`, `LEFT_HERO`, `LOAD_TIMEOUT`, `FAILED`, `ALREADY_SEEN`, `REDUCED_MOTION` |
 | `look.ts` | `lookAngles` yes; `createHeadLook` holds private scratch state | `lookAngles(target \| null, head, bodyYaw, maxYaw, maxPitch) → { yaw, pitch }`; `createHeadLook().apply(bone, yaw, pitch)` adds the offset on top of the mixer's pose |
 | `store.ts` | no | `getState`, `subscribe`, `set(partial)`, `say(text)`, `dispatchIntro(event)`, `setSection(id)`, `markModelReady()`, `arrive(stop: GuideStop)`; `useGuide(selector, store?)` |
-| `environment.ts` | no | `primeGuideState(store?, matches?, webgl?)`, `failGuide(store?)`, `setRailFreed(freed)`, `readStorage`/`writeStorage(area, key, value)`, `hasWebGL()` |
+| `environment.ts` | no | `primeGuideState(store?, matches?, webgl?)`, `failGuide(store?)` (intro `FAILED`, `enabled: false`, `available: false`, rail freed), `setRailFreed(freed)`, `readStorage(area, key)`, `writeStorage(area, key, value)`, `hasWebGL()` |
 | `useActiveSection.ts` | no | observes every `SECTION_IDS` element present in the DOM (including `linkedin`, which has no stop of its own; `stopFor` maps it to the previous stop) |
 | `useGuideEnvironment.ts` | no | subscribes to the width and reduced-motion media queries; writes `mode`, `reducedMotion` |
 | `useTargetCenter.ts` | no | `() → { center, track(el), refresh() }`: cached centre (px) of the pointing target |
 | `usePresence.ts` | no | `(value \| null, exitMs) → { shown, leaving }`: keeps the last value mounted for `exitMs` after it becomes null |
 | `useTypewriter.ts` | no | `(full, key, cps) → { text, finish }` |
 | `GuideLoader.tsx` | no | `primeGuideState()`, then mounts `GuideRoot` inside `GuideErrorBoundary` when idle and `enabled` |
-| `GuideErrorBoundary.tsx` | no | on a render error calls `failGuide` and renders nothing |
+| `GuideErrorBoundary.tsx` | no | on a render error calls `failGuide` and renders nothing; the toggle is then hidden and a reload retries |
 | `debugInfo.ts`, `shouldShowDebug.ts`, `GuideDebug.tsx` | no | dev-only overlay ([04](04-system-design.md) §9) |
 | `GuideAvatar.tsx` | no | loads `MODEL.url`, runs the frame loop ([04](04-system-design.md) §2) |
 

@@ -35,13 +35,14 @@ probe) from `GuideLoader`'s mount effect. Without WebGL the chunk is never reque
 8. yaw: yawToward(targetCentre.x, avatar px x, 0.6 rad) = sign(target side) × 0.6 rad (~34°, a fixed turn, not
    proportional) → dampE 0.25 s (snaps under reduced motion).
    targetCentre is the cached value from useTargetCenter: measured when the stop changes and on arrival,
-   refreshed on passive scroll / resize at most once per frame. The loop does no layout reads. Null during the
+   refreshed on passive scroll / resize at most once per frame. The loop reads layout only on the frame the stop
+   changes (track) and on the arrival frame (refresh). Null during the
    intro or when the stop has no target → face forward.
 9. clip = nextClip({ intro, moving, reducedMotion, stopClip: stop.clip, finished })
    if clip !== current → fadeOut(current, .3); actions[clip].reset().fadeIn(.3).play()
 10. head look, after the mixer update: lookAngles(targetCentre, head px, body yaw, ±40°, ±20°) → damp
     yaw/pitch with smoothTime 0.15 s → createHeadLook().apply(headBone, yaw, pitch), which multiplies an offset onto
-    the pose the mixer wrote. Angles are zero under reduced motion, during the intro and without a target.
+    the pose the mixer wrote. Angles damp toward zero (0.15 s) during the intro and without a target, and are zeroed immediately under reduced motion.
     Ordering constraint: drei's useAnimations registers its own frame callback that calls mixer.update; it must
     run before this loop's callback (same priority → registration order), so GuideAvatar calls useAnimations
     above its own useFrame. Reordering makes the head look flicker or vanish.
@@ -84,12 +85,10 @@ Anchor resolution:
 ### 4.1 Intro (`introMachine.ts`)
 
 ```
-              ALREADY_SEEN / REDUCED_MOTION / LOAD_TIMEOUT
-   ┌──────────────────────────────────────────────────────────────┐
-   │                                                              ▼
 pending ──MODEL_READY──▶ hello ──HELLO_DONE──▶ leaving ──ARRIVED──▶ done
-                           │                      │
-                           └───── LEFT_HERO ──────┴────────────────▶ done
+
+ALREADY_SEEN, REDUCED_MOTION, LEFT_HERO, FAILED:  any phase ──▶ done
+LOAD_TIMEOUT:                                     pending ──▶ done (ignored in other phases)
 ```
 
 - `hello`: avatar at centre, Wave then Talk, hero dimmed (`html[data-guide-intro="hello"]`), bubble shows
@@ -119,7 +118,7 @@ for wherever it landed. That removes [R1.3](01-references.md)'s race.
 ### 4.3 Bubble
 
 `store.arrive(stop)` sets `bubble = { text: stop.line, key: ++n }` if the intro is `done`, the stop has a line and
-the stop has not spoken yet this page view (during `leaving` it only dispatches `ARRIVED`). Section change → bubble cleared. Wide: stays until the next section. Compact:
+the stop has not spoken yet this page view. Arriving during `leaving` first dispatches `ARRIVED` (intro → `done`) and then speaks the hero line in the same call. Section change → bubble cleared. Wide: stays until the next section. Compact:
 auto-hides after 5 s. The bubble element has `role="status"` and `aria-live="polite"`, plus a close button.
 
 ## 5. Section detection (`useActiveSection`)
@@ -165,7 +164,7 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 | Failure | Behaviour |
 |---|---|
 | WebGL unavailable | `primeGuideState` checks `hasWebGL()` before the chunk loads: `available: false`, `enabled: false`, rail freed, toggle hidden; nothing is persisted, no error shown |
-| GLB 404 / decode error / render crash | `GuideErrorBoundary` calls `failGuide`: intro `FAILED` → `done`, `enabled: false`, rail freed. Not persisted, so the next load tries again; the toggle stays visible and offers a retry |
+| GLB 404 / decode error / render crash | `GuideErrorBoundary` calls `failGuide`: intro `FAILED` → `done`, `enabled: false`, `available: false`, rail freed, toggle hidden. Not persisted; a reload retries (the failed GLB/chunk load is cached by drei/suspend-react and `next/dynamic`, so a same-page retry cannot succeed) |
 | Slow network (model > 4 s) | Intro skipped; avatar appears in the rail later |
 | `sessionStorage`/`localStorage` throws (private mode, blocked) | Intro plays every load; toggle not remembered; nothing breaks |
 | Target selector not found | No yaw, no highlight; clip still plays |

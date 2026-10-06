@@ -135,12 +135,12 @@ directional light `#FFE2CC` from upper right. No shadows (performance, [04](04-s
 | Avatar yaw toward target | Body turns a fixed 0.6 rad (~34°) toward the target's side (sign only, 0 without a target), `dampE` 0.25 s | [R4.4](01-references.md) per-section rotation |
 | Head toward target | `damp` smoothTime 0.15 s on yaw/pitch, clamp yaw ±40°, pitch ±20° | [R2.8](01-references.md), [R1.6](01-references.md) |
 | Clip crossfade | 0.3 s | [R1.5](01-references.md) used 0.5 s |
-| Bubble in / out | opacity + 6 px rise, 180 ms ease-out / 120 ms ease-in; on exit the bubble stays mounted for 120 ms, inert, with its text frozen (no exit under reduced motion) | — |
+| Bubble in / out | in: opacity + 6 px rise, 180 ms ease-out; out: opacity only, 120 ms ease-in; on exit the bubble stays mounted for 120 ms, inert, with its text frozen (no exit under reduced motion) | — |
 | Typewriter | 35 characters per second; click finishes the line | [R3.1](01-references.md) |
-| Target highlight ring | 2 px `--color-accent` outline, 2 pulses over 1.6 s | — |
+| Target highlight ring | 2 px `--color-accent-primary` outline, 2 pulses over 1.6 s | — |
 | Hero dim during intro | opacity 1 → 0.15 in 300 ms, back in 400 ms | — |
 
-Under `prefers-reduced-motion: reduce`: no travel (position snaps), no yaw/head motion, no ring pulse (static
+Under `prefers-reduced-motion: reduce`: no travel (position snaps), the body still turns toward the target but snaps without damping, no head look (angles zeroed), no ring pulse (static
 outline for 1.6 s), no typewriter, no hero dim. Same gate as [R5.2](01-references.md).
 
 ## 6. Layering (z-index)
