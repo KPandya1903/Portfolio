@@ -9,7 +9,6 @@ export interface GuideStop {
   target?: string;
   line?: string;
   source?: string;
-  wide: { y: number };
 }
 
 export interface ModelConfig {

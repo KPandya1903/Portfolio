@@ -21,7 +21,8 @@ const needsWebGL = () => test.skip(!hasWebGL2, "this browser cannot create a Web
 
 const html = (page: Page) => page.locator("html");
 const bubble = (page: Page) => page.getByTestId("guide-bubble");
-const railPadding = (page: Page) => page.locator("section#skills");
+// No rail: the guide adds no left padding to sections (the section itself has none, content centres inside).
+const skills = (page: Page) => page.locator("section#skills");
 const scrollToSection = (page: Page, id: string) =>
   page.evaluate((s) => document.getElementById(s)!.scrollIntoView({ block: "center" }), id);
 
@@ -54,10 +55,16 @@ test("points at each section while scrolling", async ({ page }) => {
   await expect(page.locator("#skills h2")).toHaveClass(/guide-highlight/);
 });
 
-test("reserves the rail on wide screens", async ({ page }) => {
+test("rests bottom-left over full-width content on wide screens", async ({ page }) => {
   needsWebGL();
   await page.goto("/");
-  await expect(railPadding(page)).toHaveCSS("padding-left", "280px");
+  await expect(skills(page)).toHaveCSS("padding-left", "0px");
+  await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+  await expect(bubble(page)).toBeVisible({ timeout: 10_000 });
+  const box = await bubble(page).boundingBox();
+  const vh = page.viewportSize()!.height;
+  expect(box && box.x).toBeLessThan(300);
+  expect(box && box.y).toBeGreaterThan(vh / 2);
 });
 
 test.describe("phone", () => {
@@ -65,7 +72,7 @@ test.describe("phone", () => {
   test("docks bottom-left and keeps content full width", async ({ page }) => {
     needsWebGL();
     await page.goto("/");
-    await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
+    await expect(skills(page)).toHaveCSS("padding-left", "0px");
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
     await expect(bubble(page)).toBeVisible({ timeout: 10_000 });
     const box = await bubble(page).boundingBox();
@@ -96,7 +103,7 @@ test("guide can be turned off and stays off", async ({ page }) => {
   await page.getByRole("button", { name: /Guide on/ }).click();
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await page.reload();
-  await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
+  await expect(skills(page)).toHaveCSS("padding-left", "0px");
   await page.waitForTimeout(IDLE_MOUNT_GRACE_MS);
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
@@ -111,24 +118,24 @@ test("degrades gracefully without WebGL", async ({ page }) => {
     } as typeof orig;
   });
   await page.goto("/");
-  await expect(html(page)).toHaveAttribute("data-guide", "off");
+  await expect(skills(page)).toHaveCSS("padding-left", "0px");
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
-  await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
   await page.waitForTimeout(IDLE_MOUNT_GRACE_MS); // catch a late mount
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
 
-test("a failed model load removes the guide and frees the rail", async ({ page }) => {
+test("a failed model load removes the guide", async ({ page }) => {
   needsWebGL();
   await page.route("**/*.glb", (r) => r.abort());
   await recordIntroPhases(page);
   await page.goto("/");
-  await expect(html(page)).toHaveAttribute("data-guide", "off", { timeout: 20_000 });
+  // The toggle shows while the guide is still available, then the failed load takes it away.
+  await expect(page.getByRole("button", { name: /Guide/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0, { timeout: 20_000 });
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
   const phases = await readIntroPhases(page);
   expect(phases).toContain("pending"); // the recorder captured something, so the next check cannot pass on []
   expect(phases).not.toContain("hello"); // the hero was never dimmed
-  await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
+  await expect(skills(page)).toHaveCSS("padding-left", "0px");
 });

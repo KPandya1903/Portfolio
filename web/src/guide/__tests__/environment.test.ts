@@ -7,7 +7,6 @@ import {
   INTRO_SEEN_KEY,
   primeGuideState,
   readStorage,
-  setRailFreed,
   REDUCED_QUERY,
   WIDE_QUERY,
   writeStorage,
@@ -99,9 +98,9 @@ describe("primeGuideState", () => {
     expect(store.getState().enabled).toBe(false);
   });
 
-  it("frees the rail without remembering a choice when WebGL is missing", () => {
+  it("does not remember a choice when WebGL is missing", () => {
     primeGuideState(createGuideStore(), matching(WIDE_QUERY), () => false);
-    expect(document.documentElement.dataset.guide).toBe("off");
+    expect(document.documentElement.dataset.guide).toBeUndefined();
     expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
   });
 
@@ -113,27 +112,14 @@ describe("primeGuideState", () => {
     expect(store.getState().available).toBe(true);
   });
 
-  it("leaves the rail reserved when WebGL is available", () => {
-    primeGuideState(createGuideStore(), matching(WIDE_QUERY), yesWebGL);
-    expect(document.documentElement.dataset.guide).toBeUndefined();
-  });
 });
 
 describe("failGuide", () => {
-  it("finishes the intro, turns the guide off and frees the rail without persisting", () => {
+  it("finishes the intro, turns the guide off without persisting", () => {
     const store = createGuideStore({ ...INITIAL_STATE, enabled: true, intro: "hello" });
     failGuide(store);
     expect(store.getState()).toMatchObject({ enabled: false, available: false, intro: "done" });
-    expect(document.documentElement.dataset.guide).toBe("off");
-    expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
-  });
-});
-
-describe("setRailFreed", () => {
-  it("sets and clears the off marker on the root element", () => {
-    setRailFreed(true);
-    expect(document.documentElement.dataset.guide).toBe("off");
-    setRailFreed(false);
     expect(document.documentElement.dataset.guide).toBeUndefined();
+    expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
   });
 });

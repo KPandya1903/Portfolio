@@ -15,7 +15,6 @@ export const GUIDE_STOPS: GuideStop[] = [
     clip: "Point",
     target: '[data-guide-target="resume"]',
     line: "Want the one-page version? My resume is right here.",
-    wide: { y: 0.58 },
   },
   {
     id: "journey",
@@ -23,14 +22,12 @@ export const GUIDE_STOPS: GuideStop[] = [
     target: "#journey h2",
     line: "This is the path so far: Mumbai to Hoboken, research to production.",
     source: "metadata.bio[0], metadata.location",
-    wide: { y: 0.55 },
   },
   {
     id: "about",
     clip: "Talk",
     line: "I like building systems from their primitives. Here's a bit more about me.",
     source: "metadata.bio[1]",
-    wide: { y: 0.6 },
   },
   {
     id: "experience",
@@ -38,7 +35,6 @@ export const GUIDE_STOPS: GuideStop[] = [
     target: '[data-guide-target="experience-list"]',
     line: "Right now I build AI features for Fini's iOS app. Before that, a platform serving 10K+ requests a day.",
     source: "experience.ts (Fini), metadata.bio[2]",
-    wide: { y: 0.55 },
   },
   {
     id: "projects",
@@ -46,7 +42,6 @@ export const GUIDE_STOPS: GuideStop[] = [
     target: "#projects h2",
     line: "Click any card. Every public project links straight to its repo.",
     source: "projects.ts githubRepo",
-    wide: { y: 0.55 },
   },
   {
     id: "skills",
@@ -54,7 +49,6 @@ export const GUIDE_STOPS: GuideStop[] = [
     target: "#skills h2",
     line: "My toolbox, grouped by what each tool is for.",
     source: "skills.ts",
-    wide: { y: 0.55 },
   },
   {
     id: "contact",
@@ -62,7 +56,6 @@ export const GUIDE_STOPS: GuideStop[] = [
     target: '[data-guide-target="contact-links"]',
     line: "That's the tour! I'm open to new-grad SWE and ML roles. Say hi.",
     source: "metadata.availability",
-    wide: { y: 0.6 },
   },
 ];
 

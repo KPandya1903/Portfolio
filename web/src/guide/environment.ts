@@ -25,12 +25,6 @@ export function writeStorage(a: Area, key: string, value: string) {
   }
 }
 
-/** Single owner of the rail marker; the inline script in app/layout.tsx mirrors the "off" write before paint. */
-export function setRailFreed(freed: boolean) {
-  if (freed) document.documentElement.dataset.guide = "off";
-  else delete document.documentElement.dataset.guide;
-}
-
 export function hasWebGL(): boolean {
   try {
     return !!document.createElement("canvas").getContext("webgl2");
@@ -49,8 +43,6 @@ export function primeGuideState(
 ) {
   const reduced = matches(REDUCED_QUERY);
   const canRender = webgl();
-  // No WebGL is not the visitor's choice: free the rail without persisting anything.
-  if (!canRender) setRailFreed(true);
   store.set({
     available: canRender,
     enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && canRender,
@@ -61,9 +53,8 @@ export function primeGuideState(
   else if (readStorage("session", INTRO_SEEN_KEY) === "1") store.dispatchIntro("ALREADY_SEEN");
 }
 
-/** A crashed guide reads as off and hides the toggle (a cached failed load makes retry futile): intro done, rail freed, nothing persisted (docs/04 §8). */
+/** A crashed guide reads as off and hides the toggle (a cached failed load makes retry futile): intro done, nothing persisted (docs/04 §8). */
 export function failGuide(store: GuideStore = guideStore) {
   store.dispatchIntro("FAILED");
   store.set({ enabled: false, available: false });
-  setRailFreed(true);
 }

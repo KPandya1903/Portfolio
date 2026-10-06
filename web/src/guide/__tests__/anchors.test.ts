@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
 import type { GuideStop } from "../types";
 
-const stop: GuideStop = { id: "skills", clip: "Point", wide: { y: 0.55 } };
+const stop: GuideStop = { id: "skills", clip: "Point" };
 const laptop = { w: 1440, h: 900 };
 const phone = { w: 390, h: 844 };
 
@@ -23,11 +23,18 @@ describe("resolveAnchor", () => {
   it("centres the avatar during the intro (compact)", () => {
     expectAnchor(resolveAnchor(stop, "compact", "hello", phone), 195, 422, 337.6);
   });
-  it("puts the avatar in the rail after the intro", () => {
-    expectAnchor(resolveAnchor(stop, "wide", "done", laptop), 140, 495, 378);
+  it("rests in the bottom-left corner at 140 px after the intro (wide)", () => {
+    expectAnchor(resolveAnchor(stop, "wide", "done", laptop), 58, 814, 140);
   });
-  it("clamps rail height on very tall screens", () => {
-    expect(resolveAnchor(stop, "wide", "done", { w: 2560, h: 1600 }).heightPx).toBe(420);
+  it("keeps the corner spot and height on very tall screens", () => {
+    expectAnchor(resolveAnchor(stop, "wide", "done", { w: 2560, h: 1600 }), 58, 1514, 140);
+  });
+  it("walks to the corner when leaving the intro", () => {
+    expectAnchor(resolveAnchor(stop, "wide", "leaving", laptop), 58, 814, 140);
+  });
+  it("rests in the same corner regardless of the stop", () => {
+    const other: GuideStop = { id: "contact", clip: "ThumbsUp" };
+    expect(resolveAnchor(other, "wide", "done", laptop)).toEqual(resolveAnchor(stop, "wide", "done", laptop));
   });
   it("docks bottom-left at 120 px in compact mode", () => {
     expectAnchor(resolveAnchor(stop, "compact", "done", phone), 52, 768, 120);
@@ -76,7 +83,7 @@ describe("bubbleBox", () => {
   it("centres the bubble over the avatar, 12 px above its head", () => {
     expect(bubbleBox({ x: 720, top: 300 }, 248, 1440)).toEqual({ left: 596, top: 288 });
   });
-  it("keeps 12 px from the left edge (rail and compact corner)", () => {
+  it("keeps 12 px from the left edge (compact corner)", () => {
     expect(bubbleBox({ x: 52, top: 700 }, 220, 390).left).toBe(12);
   });
   it("keeps 12 px from the right edge", () => {

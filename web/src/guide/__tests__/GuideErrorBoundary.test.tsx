@@ -19,7 +19,7 @@ function Boom(): never {
 }
 
 describe("GuideErrorBoundary", () => {
-  it("removes a crashed guide, finishes the intro and frees the rail", () => {
+  it("removes a crashed guide, finishes the intro", () => {
     const store = createGuideStore({ ...INITIAL_STATE, intro: "hello" });
     render(
       <GuideErrorBoundary store={store}>
@@ -27,7 +27,7 @@ describe("GuideErrorBoundary", () => {
       </GuideErrorBoundary>,
     );
     expect(store.getState()).toMatchObject({ enabled: false, available: false, intro: "done" });
-    expect(document.documentElement.dataset.guide).toBe("off");
+    expect(document.documentElement.dataset.guide).toBeUndefined();
     expect(localStorage.getItem("guide:enabled")).toBeNull();
   });
 

@@ -27,16 +27,9 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg", apple: "/favicon.svg" },
 };
 
-// String twin of setRailFreed(true) in guide/environment.ts; keep them in sync.
-// Runs before paint so a visitor who turned the guide off never sees the rail padding flash (CLS 0).
-const guidePrefScript = `try{if(localStorage.getItem("guide:enabled")==="0")document.documentElement.dataset.guide="off"}catch(e){}`;
-
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: guidePrefScript }} />
-      </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-text-primary`}
       >

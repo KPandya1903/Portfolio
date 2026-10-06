@@ -22,12 +22,12 @@ describe("GuideToggle", () => {
     expect(button().getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("turns the guide off, remembers it, and drops the rail", () => {
+  it("turns the guide off, and remembers it", () => {
     render(<GuideToggle store={store} />);
     fireEvent.click(button());
     expect(store.getState().enabled).toBe(false);
     expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBe("0");
-    expect(document.documentElement.dataset.guide).toBe("off");
+    expect(document.documentElement.dataset.guide).toBeUndefined();
     expect(button().textContent).toBe("Guide off");
   });
 

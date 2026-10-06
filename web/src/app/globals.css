@@ -23,10 +23,6 @@
   --shadow-card-lg: 0 20px 25px rgba(62, 39, 35, 0.12), 0 10px 10px rgba(62, 39, 35, 0.04);
 }
 
-:root {
-  --rail-width: 280px;
-}
-
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -46,13 +42,6 @@
 }
 
 /* ---- Avatar guide (docs/02-layout.md) ---- */
-@media (min-width: 1280px) {
-  /* On each section, not on main, so section backgrounds still run full width under the rail. */
-  html:not([data-guide="off"]) main > section {
-    padding-left: var(--rail-width);
-  }
-}
-
 #hero > * {
   transition: opacity 400ms ease;
 }
