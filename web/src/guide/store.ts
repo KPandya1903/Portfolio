@@ -3,6 +3,7 @@ import { introReducer, type IntroEvent } from "./introMachine";
 import type { GuideState, GuideStop } from "./types";
 
 export const INITIAL_STATE: GuideState = {
+  available: true,
   enabled: true,
   mode: "wide",
   reducedMotion: false,

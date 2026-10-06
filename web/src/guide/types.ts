@@ -19,6 +19,7 @@ export interface ModelConfig {
 }
 
 export interface GuideState {
+  available: boolean;
   enabled: boolean;
   mode: Mode;
   reducedMotion: boolean;

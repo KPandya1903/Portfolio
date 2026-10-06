@@ -24,6 +24,7 @@ export function GuideCanvas() {
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
       style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none" }}
       aria-hidden="true"
+      // R3F applies this to the wrapper div; it guards against the wrapper ever becoming focusable. Don't move it onto the canvas.
       tabIndex={-1}
       data-testid="guide-canvas"
     >

@@ -7,6 +7,7 @@ import {
   INTRO_SEEN_KEY,
   primeGuideState,
   readStorage,
+  setRailFreed,
   REDUCED_QUERY,
   WIDE_QUERY,
   writeStorage,
@@ -104,6 +105,14 @@ describe("primeGuideState", () => {
     expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
   });
 
+  it("marks the guide unavailable without WebGL, available with it", () => {
+    const store = createGuideStore({ ...INITIAL_STATE, available: true });
+    primeGuideState(store, matching(WIDE_QUERY), () => false);
+    expect(store.getState().available).toBe(false);
+    primeGuideState(store, matching(WIDE_QUERY), yesWebGL);
+    expect(store.getState().available).toBe(true);
+  });
+
   it("leaves the rail reserved when WebGL is available", () => {
     primeGuideState(createGuideStore(), matching(WIDE_QUERY), yesWebGL);
     expect(document.documentElement.dataset.guide).toBeUndefined();
@@ -117,5 +126,14 @@ describe("failGuide", () => {
     expect(store.getState()).toMatchObject({ enabled: false, intro: "done" });
     expect(document.documentElement.dataset.guide).toBe("off");
     expect(localStorage.getItem(GUIDE_ENABLED_KEY)).toBeNull();
+  });
+});
+
+describe("setRailFreed", () => {
+  it("sets and clears the off marker on the root element", () => {
+    setRailFreed(true);
+    expect(document.documentElement.dataset.guide).toBe("off");
+    setRailFreed(false);
+    expect(document.documentElement.dataset.guide).toBeUndefined();
   });
 });

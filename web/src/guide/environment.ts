@@ -25,6 +25,12 @@ export function writeStorage(a: Area, key: string, value: string) {
   }
 }
 
+/** Single owner of the rail marker; the inline script in app/layout.tsx mirrors the "off" write before paint. */
+export function setRailFreed(freed: boolean) {
+  if (freed) document.documentElement.dataset.guide = "off";
+  else delete document.documentElement.dataset.guide;
+}
+
 export function hasWebGL(): boolean {
   try {
     return !!document.createElement("canvas").getContext("webgl2");
@@ -44,8 +50,9 @@ export function primeGuideState(
   const reduced = matches(REDUCED_QUERY);
   const canRender = webgl();
   // No WebGL is not the visitor's choice: free the rail without persisting anything.
-  if (!canRender) document.documentElement.dataset.guide = "off";
+  if (!canRender) setRailFreed(true);
   store.set({
+    available: canRender,
     enabled: readStorage("local", GUIDE_ENABLED_KEY) !== "0" && canRender,
     mode: matches(WIDE_QUERY) ? "wide" : "compact",
     reducedMotion: reduced,
@@ -58,5 +65,5 @@ export function primeGuideState(
 export function failGuide(store: GuideStore = guideStore) {
   store.dispatchIntro("FAILED");
   store.set({ enabled: false });
-  document.documentElement.dataset.guide = "off";
+  setRailFreed(true);
 }

@@ -31,6 +31,12 @@ describe("GuideToggle", () => {
     expect(button().textContent).toBe("Guide off");
   });
 
+  it("renders nothing when the guide is unavailable", () => {
+    store.set({ available: false });
+    render(<GuideToggle store={store} />);
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("turns it back on", () => {
     render(<GuideToggle store={store} />);
     fireEvent.click(button());

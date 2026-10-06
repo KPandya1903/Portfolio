@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { primeGuideState } from "./environment";
+import { GuideErrorBoundary } from "./GuideErrorBoundary";
 import { useGuide } from "./store";
 
 // ssr:false must live in a client component (Next 16 lazy-loading guide).
@@ -24,5 +25,9 @@ export function GuideLoader() {
     return () => window.clearTimeout(id);
   }, []);
 
-  return idle && enabled ? <GuideRoot /> : null;
+  return idle && enabled ? (
+    <GuideErrorBoundary>
+      <GuideRoot />
+    </GuideErrorBoundary>
+  ) : null;
 }
