@@ -5,6 +5,8 @@ export interface TargetCenter {
   center: MutableRefObject<{ x: number; y: number } | null>;
   /** Track an element (measured now, then on scroll/resize, at most once per frame); null stops tracking. */
   track: (el: Element | null) => void;
+  /** Re-measure the tracked element now (e.g. on arrival, once the avatar has settled). */
+  refresh: () => void;
 }
 
 /** Caches the pointing target's centre (docs/04 §5): scroll is passive and rAF-throttled, resize re-measures. */
@@ -14,7 +16,7 @@ export function useTargetCenter(): TargetCenter {
   const held = useRef({ x: 0, y: 0 }); // mutated on re-measure so no object is allocated per measure
 
   const measure = useCallback(() => {
-    if (!el.current) {
+    if (!el.current || !el.current.isConnected) {
       center.current = null;
       return;
     }
@@ -35,7 +37,7 @@ export function useTargetCenter(): TargetCenter {
   useEffect(() => {
     let raf = 0;
     const schedule = () => {
-      if (raf) return;
+      if (raf || !el.current) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
         if (el.current) measure();
@@ -50,5 +52,5 @@ export function useTargetCenter(): TargetCenter {
     };
   }, [measure]);
 
-  return { center, track };
+  return { center, track, refresh: measure };
 }

@@ -34,6 +34,8 @@ export function GuideAvatar() {
   const root = useRef<THREE.Group>(null!);
   const body = useRef<THREE.Group>(null!);
   const { scene, animations } = useGLTF(MODEL.url);
+  // Keep this above this component's useFrame: drei's mixer.update must run before the head offset (same-priority
+  // R3F subscribers run in registration order); reordering makes the head look flicker or vanish.
   const { actions, mixer } = useAnimations(animations, body);
   const size = useThree((s) => s.size);
 
@@ -53,9 +55,9 @@ export function GuideAvatar() {
   const placed = useRef(false);
   const lastStop = useRef<string | null>(null);
   const arrivedAt = useRef<string | null>(null);
-  const { center, track } = useTargetCenter();
+  const { center, track, refresh } = useTargetCenter();
   const headBone = useMemo(() => scene.getObjectByName(MODEL.headBone) ?? null, [scene]);
-  const headLook = useMemo(() => createHeadLook(), []);
+  const headLook = useMemo(() => (headBone ? createHeadLook() : null), [headBone]);
   const headAngles = useRef({ yaw: 0, pitch: 0 });
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export function GuideAvatar() {
     if (!moving && !inIntro && arrivedAt.current !== stop.id) {
       arrivedAt.current = stop.id;
       guideStore.arrive(stop);
+      refresh();
       if (stop.target) flashHighlight(stop.target);
     }
 
@@ -143,24 +146,23 @@ export function GuideAvatar() {
 
     if (headBone) {
       // After the clip step: drei's mixer already ran this frame, so the bone holds the animated pose.
-      const gaze = !inIntro && !s.reducedMotion ? center.current : null;
-      headBone.getWorldPosition(headWorld);
-      const want = lookAngles(
-        gaze,
-        worldToPx(headWorld, v),
-        body.current.rotation.y,
-        MAX_HEAD_YAW,
-        MAX_HEAD_PITCH,
-      );
       const angles = headAngles.current;
       if (s.reducedMotion) {
         angles.yaw = 0;
         angles.pitch = 0;
       } else {
+        headBone.getWorldPosition(headWorld);
+        const want = lookAngles(
+          inIntro ? null : center.current,
+          worldToPx(headWorld, v),
+          body.current.rotation.y,
+          MAX_HEAD_YAW,
+          MAX_HEAD_PITCH,
+        );
         easing.damp(angles, "yaw", want.yaw, 0.15, dt);
         easing.damp(angles, "pitch", want.pitch, 0.15, dt);
       }
-      headLook.apply(headBone, HEAD_YAW_SIGN * angles.yaw, HEAD_PITCH_SIGN * angles.pitch);
+      headLook?.apply(headBone, HEAD_YAW_SIGN * angles.yaw, HEAD_PITCH_SIGN * angles.pitch);
     }
 
     const heightPx = root.current.scale.y * height;

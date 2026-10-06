@@ -38,6 +38,12 @@ describe("lookAngles", () => {
   });
 });
 
+describe("lookAngles with body yaw", () => {
+  it("clamps after subtracting the body yaw", () => {
+    expect(angles({ x: 100 - 5000, y: 300 }, 0.6).yaw).toBeCloseTo(-MAX_YAW);
+  });
+});
+
 describe("createHeadLook", () => {
   const offset = (yaw: number, pitch: number) =>
     new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, "YXZ"));
@@ -63,6 +69,15 @@ describe("createHeadLook", () => {
     look.apply(b, 0.3, 0.1);
     const expected = newBase.clone().multiply(offset(0.3, 0.1));
     expect(b.quaternion.angleTo(expected)).toBeLessThan(1e-6);
+  });
+
+  it("follows angle changes while the mixer is idle", () => {
+    const base = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.1, 0.2, 0.3));
+    const b = bone(base.clone());
+    const look = createHeadLook();
+    look.apply(b, 0.4, 0.1);
+    look.apply(b, 0.2, 0.05);
+    expect(b.quaternion.angleTo(base.clone().multiply(offset(0.2, 0.05)))).toBeLessThan(1e-6);
   });
 
   it("leaves the base unchanged for zero yaw and pitch", () => {

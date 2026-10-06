@@ -1,18 +1,25 @@
 // @vitest-environment happy-dom
-import { act, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTargetCenter } from "../useTargetCenter";
 
 function fakeEl(rect: { left: number; top: number; width: number; height: number }) {
+  const el = document.createElement("div");
+  document.body.appendChild(el);
   const getBoundingClientRect = vi.fn(() => rect as DOMRect);
-  return { el: { getBoundingClientRect } as unknown as Element, getBoundingClientRect };
+  el.getBoundingClientRect = getBoundingClientRect;
+  return { el, getBoundingClientRect };
 }
 
 const frame = () => act(() => void vi.advanceTimersByTime(20));
 
 describe("useTargetCenter", () => {
   beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    cleanup();
+    document.body.innerHTML = "";
+    vi.useRealTimers();
+  });
 
   it("measures the element centre on track", () => {
     const { result } = renderHook(() => useTargetCenter());
@@ -51,11 +58,35 @@ describe("useTargetCenter", () => {
     expect(getBoundingClientRect).toHaveBeenCalledTimes(2);
   });
 
-  it("does nothing when no element is tracked", () => {
-    const { result } = renderHook(() => useTargetCenter());
+  it("schedules no frame on scroll when nothing is tracked", () => {
+    const raf = vi.spyOn(window, "requestAnimationFrame");
+    renderHook(() => useTargetCenter());
     window.dispatchEvent(new Event("scroll"));
-    frame();
+    window.dispatchEvent(new Event("resize"));
+    expect(raf).not.toHaveBeenCalled();
+    raf.mockRestore();
+  });
+
+  it("treats a disconnected element as no target", () => {
+    const { result } = renderHook(() => useTargetCenter());
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    el.getBoundingClientRect = () => ({ left: 0, top: 0, width: 10, height: 10 }) as DOMRect;
+    act(() => result.current.track(el));
+    expect(result.current.center.current).toEqual({ x: 5, y: 5 });
+    el.remove();
+    act(() => result.current.refresh());
     expect(result.current.center.current).toBeNull();
+  });
+
+  it("refresh re-measures immediately", () => {
+    const { result } = renderHook(() => useTargetCenter());
+    const rect = { left: 0, top: 0, width: 10, height: 10 };
+    const { el } = fakeEl(rect);
+    act(() => result.current.track(el));
+    rect.left = 50;
+    act(() => result.current.refresh());
+    expect(result.current.center.current).toEqual({ x: 55, y: 5 });
   });
 
   it("stops listening and cancels a pending frame after unmount", () => {
