@@ -13,6 +13,7 @@ import {
 import { FaGithub } from "react-icons/fa";
 import { HiExternalLink, HiLockClosed } from "react-icons/hi";
 import { ScrollReveal } from "../animations/ScrollReveal";
+import { visibleYearLabels } from "./yearLabels";
 import { timeline, timelineAsOf } from "@/data/timeline";
 import { TimelineCategory, TimelineEntry } from "@/types";
 import { cn } from "@/lib/utils";
@@ -335,14 +336,11 @@ export const Journey = () => {
     return acc;
   }, {});
 
-  const miniYearVisible = years.reduce<{ last: number; shown: boolean[] }>(
-    (acc, { x }) => {
-      const px = (x / width) * miniWidth;
-      const show = px - acc.last >= 38;
-      return { last: show ? px : acc.last, shown: [...acc.shown, show] };
-    },
-    { last: 36, shown: [] },
-  ).shown;
+  const miniYearVisible = visibleYearLabels(
+    years.map((y) => y.x),
+    width,
+    miniWidth,
+  );
 
   const fadeStop = (PAD * 0.75) / width;
   const todayDate = new Date(today);
