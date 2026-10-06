@@ -4,8 +4,12 @@ A rebuild of Kunj Pandya's portfolio around a 3D avatar guide. The avatar opens 
 screen, introduces Kunj in a speech bubble, points at the resume, then docks on the left and points at each section
 as the visitor scrolls.
 
-**Status (2026-10-05):** docs only. No application code yet. The Next.js app will live in `web/` (Task 1 of the
-implementation plan creates it).
+**Status (2026-10-05):** the site and the guide are built in `web/` (plan Tasks 1–13, plus 15–16 partly) and run
+on a placeholder robot (CC0). Waiting on: Kunj's avatar (Task 14, docs/05), publishing to GitHub/Vercel/Cloudflare
+(Task 16, needs Kunj's approval). Performance notes: [docs/perf-2026-10-05.md](docs/perf-2026-10-05.md).
+
+Run it: `cd web && npm install && npm run dev`, then open http://localhost:3000 in a private window (the intro
+plays once per browser session). Checks: `npm run lint && npm run typecheck && npm test && npm run build && npm run e2e`.
 
 > The folder is `portfolio-3d`, not `portfolio`: this Mac's disk is case-insensitive, so `Prep/portfolio` would be
 > the same folder as the existing `Prep/Portfolio` (the live site's repo).
