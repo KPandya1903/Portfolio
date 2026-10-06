@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
-import type { GuideStop } from "../types";
-
-const stop: GuideStop = { id: "skills", clip: "Point" };
 const laptop = { w: 1440, h: 900 };
 const phone = { w: 390, h: 844 };
 
@@ -15,29 +12,38 @@ const expectAnchor = (a: { x: number; y: number; heightPx: number }, x: number, 
 
 describe("resolveAnchor", () => {
   it("centres the avatar during the intro (wide)", () => {
-    expectAnchor(resolveAnchor(stop, "wide", "hello", laptop), 720, 468, 495);
+    expectAnchor(resolveAnchor("wide", "hello", false, laptop), 720, 468, 495);
   });
   it("treats pending like hello so the avatar first appears centred", () => {
-    expect(resolveAnchor(stop, "wide", "pending", laptop)).toEqual(resolveAnchor(stop, "wide", "hello", laptop));
+    expect(resolveAnchor("wide", "pending", false, laptop)).toEqual(resolveAnchor("wide", "hello", false, laptop));
   });
   it("centres the avatar during the intro (compact)", () => {
-    expectAnchor(resolveAnchor(stop, "compact", "hello", phone), 195, 422, 337.6);
+    expectAnchor(resolveAnchor("compact", "hello", false, phone), 195, 422, 337.6);
   });
   it("rests in the bottom-left corner at 140 px after the intro (wide)", () => {
-    expectAnchor(resolveAnchor(stop, "wide", "done", laptop), 58, 814, 140);
+    expectAnchor(resolveAnchor("wide", "done", false, laptop), 58, 814, 140);
   });
   it("keeps the corner spot and height on very tall screens", () => {
-    expectAnchor(resolveAnchor(stop, "wide", "done", { w: 2560, h: 1600 }), 58, 1514, 140);
+    expectAnchor(resolveAnchor("wide", "done", false, { w: 2560, h: 1600 }), 58, 1514, 140);
   });
   it("walks to the corner when leaving the intro", () => {
-    expectAnchor(resolveAnchor(stop, "wide", "leaving", laptop), 58, 814, 140);
+    expectAnchor(resolveAnchor("wide", "leaving", false, laptop), 58, 814, 140);
   });
-  it("rests in the same corner regardless of the stop", () => {
-    const other: GuideStop = { id: "contact", clip: "ThumbsUp" };
-    expect(resolveAnchor(other, "wide", "done", laptop)).toEqual(resolveAnchor(stop, "wide", "done", laptop));
+  it("goes to the centre at 45% of the viewport height while staging (wide)", () => {
+    expectAnchor(resolveAnchor("wide", "done", true, laptop), 720, 468, 405);
+  });
+  it("clamps the stage height between 260 and 420 px", () => {
+    expect(resolveAnchor("wide", "done", true, { w: 1440, h: 500 }).heightPx).toBe(260);
+    expect(resolveAnchor("wide", "done", true, { w: 2560, h: 1600 }).heightPx).toBe(420);
+  });
+  it("walks back to the corner when the stage ends", () => {
+    expectAnchor(resolveAnchor("wide", "done", false, laptop), 58, 814, 140);
+  });
+  it("lets the intro win over a stage", () => {
+    expect(resolveAnchor("wide", "hello", true, laptop)).toEqual(resolveAnchor("wide", "hello", false, laptop));
   });
   it("docks bottom-left at 120 px in compact mode", () => {
-    expectAnchor(resolveAnchor(stop, "compact", "done", phone), 52, 768, 120);
+    expectAnchor(resolveAnchor("compact", "done", false, phone), 52, 768, 120);
   });
 });
 
@@ -59,23 +65,23 @@ describe("modeForWidth", () => {
 
 describe("worldToPx", () => {
   it("inverts pxToWorld", () => {
-    const p = { x: 140, y: 495 };
+    const p = { x: 58, y: 814 };
     expect(worldToPx(pxToWorld(p, laptop), laptop)).toEqual(p);
   });
 });
 
 describe("yawToward", () => {
   it("turns right toward a target on the right", () => {
-    expect(yawToward(800, 140, 0.6)).toBe(0.6);
+    expect(yawToward(800, 58, 0.6)).toBe(0.6);
   });
   it("turns left toward a target on the left", () => {
-    expect(yawToward(50, 140, 0.6)).toBe(-0.6);
+    expect(yawToward(30, 58, 0.6)).toBe(-0.6);
   });
   it("faces forward with no target", () => {
-    expect(yawToward(null, 140, 0.6)).toBe(0);
+    expect(yawToward(null, 58, 0.6)).toBe(0);
   });
   it("faces forward when the target is straight ahead", () => {
-    expect(yawToward(140, 140, 0.6)).toBe(0);
+    expect(yawToward(58, 58, 0.6)).toBe(0);
   });
 });
 

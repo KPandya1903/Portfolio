@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { bubbleBox } from "./anchors";
+import { TYPE_CPS } from "./config";
 import { bubbleAnchor } from "./bubbleAnchor";
 import { guideStore, useGuide, type GuideStore } from "./store";
 import { usePresence } from "./usePresence";
 import { useTypewriter } from "./useTypewriter";
 
 const COMPACT_HIDE_MS = 5000;
-const TYPE_CPS = 35;
+
 const EXIT_MS = 120;
 const BOX =
   "rounded-[14px] border border-accent-cream bg-surface-light px-4 py-3 pr-8 text-sm leading-snug text-text-primary shadow-card-lg";

@@ -1,4 +1,4 @@
-import type { GuideStop, IntroPhase, Mode } from "./types";
+import type { IntroPhase, Mode } from "./types";
 
 export interface Viewport {
   w: number;
@@ -19,12 +19,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 export const modeForWidth = (w: number): Mode => (w >= WIDE_MIN_WIDTH ? "wide" : "compact");
 
 /** Where the avatar's vertical centre should be, in CSS pixels from the top-left (docs/04 §3). */
-export function resolveAnchor(_stop: GuideStop, mode: Mode, intro: IntroPhase, v: Viewport): Anchor {
+export function resolveAnchor(mode: Mode, intro: IntroPhase, staging: boolean, v: Viewport): Anchor {
   if (intro === "pending" || intro === "hello") {
     return mode === "wide"
       ? { x: v.w / 2, y: 0.52 * v.h, heightPx: clamp(0.55 * v.h, 320, 520) }
       : { x: v.w / 2, y: 0.5 * v.h, heightPx: 0.4 * v.h };
   }
+  // Center stage: same centre as the intro, a little smaller (compact never stages; the guard keeps the maths total).
+  if (staging) return { x: v.w / 2, y: 0.52 * v.h, heightPx: clamp(0.45 * v.h, 260, 420) };
   // Resting spot: bottom-left corner, same for every stop.
   const heightPx = REST_HEIGHT[mode];
   return { x: REST_INSET + 0.3 * heightPx, y: v.h - REST_INSET - heightPx / 2, heightPx };

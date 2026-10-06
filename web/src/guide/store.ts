@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { introReducer, type IntroEvent } from "./introMachine";
+import { GUIDE_STOPS } from "./config";
+import { shouldStage } from "./stageRules";
 import type { GuideState, GuideStop } from "./types";
 
 export const INITIAL_STATE: GuideState = {
@@ -11,6 +13,7 @@ export const INITIAL_STATE: GuideState = {
   intro: "pending",
   modelReady: false,
   bubble: null,
+  stage: null,
 };
 
 /** One store, discrete writers only; per-frame code reads getState() (docs/03 §6). */
@@ -19,6 +22,8 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
   let bubbleKey = 0;
   const listeners = new Set<() => void>();
   const spoken = new Set<string>();
+  const staged = new Set<string>();
+  let sectionSince = Date.now();
 
   const set = (partial: Partial<GuideState>) => {
     const keys = Object.keys(partial) as (keyof GuideState)[];
@@ -28,6 +33,24 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
   };
   const dispatchIntro = (event: IntroEvent) => set({ intro: introReducer(state.intro, event) });
   const say = (text: string) => set({ bubble: { text, key: ++bubbleKey } });
+  const speakOnce = (stop: GuideStop) => {
+    if (!stop.line || spoken.has(stop.id)) return;
+    spoken.add(stop.id);
+    say(stop.line);
+  };
+  /** Would the rules stage this section (only sections with a stop of their own can)? Dwell defaults to the real one. */
+  const canStage = (id: string, opts: { forced?: boolean; dwellMs?: number } = {}) =>
+    GUIDE_STOPS.some((s) => s.id === id) &&
+    shouldStage({
+      sectionId: id,
+      staged,
+      dwellMs: opts.dwellMs ?? Date.now() - sectionSince,
+      reducedMotion: state.reducedMotion,
+      mode: state.mode,
+      intro: state.intro,
+      stageActive: state.stage !== null,
+      forced: opts.forced,
+    });
 
   return {
     getState: () => state,
@@ -40,8 +63,24 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     dispatchIntro,
     setSection(id: string) {
       if (id === state.section) return;
-      set({ section: id, bubble: null });
+      sectionSince = Date.now();
+      // A section change interrupts a running stage (the robot walks back at once).
+      set({ section: id, bubble: null, stage: null });
       if (id !== "hero") dispatchIntro("LEFT_HERO");
+    },
+    /** Sections staged this page view (a section is never staged twice). */
+    staged: staged as ReadonlySet<string>,
+    /** How long the current section has been active, for the stage's fast-scroll rule. */
+    dwellMs: () => Date.now() - sectionSince,
+    canStage,
+    startStage(id: string) {
+      staged.add(id);
+      set({ stage: { sectionId: id } });
+      const stop = GUIDE_STOPS.find((s) => s.id === id);
+      if (stop) speakOnce(stop);
+    },
+    endStage() {
+      set({ stage: null });
     },
     markModelReady() {
       set({ modelReady: true });
@@ -49,9 +88,10 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     },
     arrive(stop: GuideStop) {
       if (state.intro === "leaving") dispatchIntro("ARRIVED");
-      if (state.intro !== "done" || !stop.line || spoken.has(stop.id)) return;
-      spoken.add(stop.id);
-      say(stop.line);
+      if (state.intro !== "done") return;
+      // A section about to stage says its line from the stage instead; stop.id === section excludes e.g. LinkedIn.
+      if (stop.id === state.section && canStage(stop.id, { dwellMs: Infinity })) return;
+      speakOnce(stop);
     },
   };
 }

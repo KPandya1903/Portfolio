@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { readIntroPhases, recordIntroPhases } from "./helpers";
+import { readIntroPhases, readStages, recordIntroPhases, recordStages } from "./helpers";
 
 // GuideLoader mounts the canvas from requestIdleCallback (timeout 2000 ms) or a 1200 ms setTimeout fallback.
 // Absence checks must wait past that, or they pass before a wrongly-mounting guide could appear.
@@ -21,8 +21,13 @@ const needsWebGL = () => test.skip(!hasWebGL2, "this browser cannot create a Web
 
 const html = (page: Page) => page.locator("html");
 const bubble = (page: Page) => page.getByTestId("guide-bubble");
-// No rail: the guide adds no left padding to sections (the section itself has none, content centres inside).
-const skills = (page: Page) => page.locator("section#skills");
+// No rail: the guide pushes nothing aside, so a full-width block (the h2) is centred on the viewport.
+const expectFullWidth = async (page: Page) => {
+  const box = await page.locator("#skills h2").boundingBox();
+  const vw = await page.evaluate(() => document.documentElement.clientWidth);
+  expect(box).not.toBeNull();
+  expect(Math.abs(box!.x + box!.width / 2 - vw / 2)).toBeLessThan(2);
+};
 const scrollToSection = (page: Page, id: string) =>
   page.evaluate((s) => document.getElementById(s)!.scrollIntoView({ block: "center" }), id);
 
@@ -58,7 +63,7 @@ test("points at each section while scrolling", async ({ page }) => {
 test("rests bottom-left over full-width content on wide screens", async ({ page }) => {
   needsWebGL();
   await page.goto("/");
-  await expect(skills(page)).toHaveCSS("padding-left", "0px");
+  await expectFullWidth(page);
   await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
   await expect(bubble(page)).toBeVisible({ timeout: 10_000 });
   const box = await bubble(page).boundingBox();
@@ -72,7 +77,7 @@ test.describe("phone", () => {
   test("docks bottom-left and keeps content full width", async ({ page }) => {
     needsWebGL();
     await page.goto("/");
-    await expect(skills(page)).toHaveCSS("padding-left", "0px");
+    await expectFullWidth(page);
     await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
     await expect(bubble(page)).toBeVisible({ timeout: 10_000 });
     const box = await bubble(page).boundingBox();
@@ -103,7 +108,7 @@ test("guide can be turned off and stays off", async ({ page }) => {
   await page.getByRole("button", { name: /Guide on/ }).click();
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await page.reload();
-  await expect(skills(page)).toHaveCSS("padding-left", "0px");
+  await expectFullWidth(page);
   await page.waitForTimeout(IDLE_MOUNT_GRACE_MS);
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
 });
@@ -118,7 +123,7 @@ test("degrades gracefully without WebGL", async ({ page }) => {
     } as typeof orig;
   });
   await page.goto("/");
-  await expect(skills(page)).toHaveCSS("padding-left", "0px");
+  await expectFullWidth(page);
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
   await page.waitForTimeout(IDLE_MOUNT_GRACE_MS); // catch a late mount
@@ -129,13 +134,69 @@ test("a failed model load removes the guide", async ({ page }) => {
   needsWebGL();
   await page.route("**/*.glb", (r) => r.abort());
   await recordIntroPhases(page);
+  // Registered before navigation so the failure cannot be missed; the toggle must disappear after it, not before it ever mounted.
+  const modelFailed = page.waitForEvent("requestfailed", { predicate: (r) => r.url().endsWith(".glb"), timeout: 20_000 });
   await page.goto("/");
-  // The toggle shows while the guide is still available, then the failed load takes it away.
-  await expect(page.getByRole("button", { name: /Guide/ })).toBeVisible({ timeout: 20_000 });
+  await modelFailed;
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0, { timeout: 20_000 });
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   const phases = await readIntroPhases(page);
   expect(phases).toContain("pending"); // the recorder captured something, so the next check cannot pass on []
   expect(phases).not.toContain("hello"); // the hero was never dimmed
-  await expect(skills(page)).toHaveCSS("padding-left", "0px");
+  await expectFullWidth(page);
+});
+
+const STAGE = "data-guide-stage";
+const noStage = (page: Page) => expect(html(page)).not.toHaveAttribute(STAGE, /.+/);
+
+test("center stage plays once for a new section", async ({ page }) => {
+  needsWebGL();
+  await recordStages(page);
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+  await scrollToSection(page, "experience");
+  await expect(html(page)).toHaveAttribute(STAGE, "experience", { timeout: 10_000 });
+  await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 });
+  await noStage(page); // the stage ends by itself and the robot walks back
+  await expect(bubble(page)).toContainText("Fini");
+
+  await scrollToSection(page, "projects");
+  await expect(html(page)).toHaveAttribute(STAGE, "projects", { timeout: 10_000 });
+  await scrollToSection(page, "experience");
+  await expect(html(page)).toHaveAttribute("data-guide-section", "experience");
+  await page.waitForTimeout(1500); // past the dwell: a second stage for experience would have started
+  expect((await readStages(page)).filter((s) => s === "experience")).toHaveLength(1);
+  await noStage(page);
+});
+
+test.describe("no stage", () => {
+  test.describe("phone", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    test("never stages a section", async ({ page }) => {
+      needsWebGL();
+      await recordStages(page);
+      await page.goto("/");
+      await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+      await scrollToSection(page, "experience");
+      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 });
+      await page.waitForTimeout(1500);
+      expect(await readStages(page)).toEqual([]);
+      await noStage(page);
+    });
+  });
+
+  test.describe("reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+    test("never stages a section", async ({ page }) => {
+      needsWebGL();
+      await recordStages(page);
+      await page.goto("/");
+      await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+      await scrollToSection(page, "experience");
+      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 });
+      await page.waitForTimeout(1500);
+      expect(await readStages(page)).toEqual([]);
+      await noStage(page);
+    });
+  });
 });

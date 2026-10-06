@@ -9,11 +9,13 @@ import { guideStore, useGuide } from "./store";
 import { useActiveSection } from "./useActiveSection";
 import { useGuideEnvironment } from "./useGuideEnvironment";
 import { useIntroSequence } from "./useIntroSequence";
+import { useStage } from "./useStage";
 
 export default function GuideRoot() {
   useGuideEnvironment();
   useActiveSection(SECTION_IDS);
   useIntroSequence();
+  useStage();
 
   // Read once. Touching window here is safe only because GuideRoot is client-only (loaded with ssr:false).
   // The literal NODE_ENV check is required for dead-code elimination in production; do not move it

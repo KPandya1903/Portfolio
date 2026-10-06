@@ -21,3 +21,21 @@ export async function recordIntroPhases(page: Page) {
 export async function readIntroPhases(page: Page): Promise<string[]> {
   return page.evaluate((key) => JSON.parse(sessionStorage.getItem(key) ?? "[]") as string[], PHASES_KEY);
 }
+
+const STAGES_KEY = "test:stages";
+
+/** Records every non-empty value `<html data-guide-stage>` takes, in order (same MutationObserver approach as the intro). */
+export async function recordStages(page: Page) {
+  await page.addInitScript((key) => {
+    new MutationObserver(() => {
+      const v = document.documentElement?.dataset.guideStage;
+      if (!v) return;
+      const seen: string[] = JSON.parse(sessionStorage.getItem(key) ?? "[]");
+      if (seen[seen.length - 1] !== v) sessionStorage.setItem(key, JSON.stringify([...seen, v]));
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-guide-stage"] });
+  }, STAGES_KEY);
+}
+
+export async function readStages(page: Page): Promise<string[]> {
+  return page.evaluate((key) => JSON.parse(sessionStorage.getItem(key) ?? "[]") as string[], STAGES_KEY);
+}

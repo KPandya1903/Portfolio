@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createGuideStore, INITIAL_STATE } from "../store";
 import { GUIDE_STOPS } from "../config";
 
 const hero = GUIDE_STOPS[0];
+const experience = GUIDE_STOPS.find((s) => s.id === "experience")!;
 const skills = GUIDE_STOPS.find((s) => s.id === "skills")!;
 
 describe("guide store", () => {
@@ -50,5 +51,96 @@ describe("guide store", () => {
     const first = store.getState().bubble!.key;
     store.say("a");
     expect(store.getState().bubble!.key).toBe(first + 1);
+  });
+
+  describe("stage", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+    const ready = () => {
+      const store = createGuideStore();
+      store.set({ intro: "done" });
+      return store;
+    };
+
+    it("starts a stage: records it, marks the section staged, says the line once", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      expect(store.getState().stage).toEqual({ sectionId: "experience" });
+      expect(store.staged.has("experience")).toBe(true);
+      expect(store.getState().bubble?.text).toBe(experience.line);
+    });
+
+    it("ends a stage", () => {
+      const store = ready();
+      store.startStage("experience");
+      store.endStage();
+      expect(store.getState().stage).toBeNull();
+      expect(store.staged.has("experience")).toBe(true);
+    });
+
+    it("ends the stage when the section changes (interrupt)", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      store.setSection("projects");
+      expect(store.getState().stage).toBeNull();
+    });
+
+    it("does not say a staged line again when the robot reaches the corner", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      store.endStage();
+      store.set({ bubble: null });
+      store.arrive(experience);
+      expect(store.getState().bubble).toBeNull();
+    });
+
+    it("tracks how long the current section has been active", () => {
+      const store = ready();
+      store.setSection("experience");
+      vi.advanceTimersByTime(900);
+      expect(store.dwellMs()).toBe(900);
+      store.setSection("projects");
+      expect(store.dwellMs()).toBe(0);
+    });
+
+    it("holds the corner line back for a section that is about to stage, then speaks it from the stage", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.arrive(experience);
+      expect(store.getState().bubble).toBeNull();
+      store.startStage("experience");
+      expect(store.getState().bubble?.text).toBe(experience.line);
+    });
+
+    it("still speaks from the corner when staging is skipped (reduced motion, compact, already staged)", () => {
+      for (const partial of [{ reducedMotion: true }, { mode: "compact" as const }]) {
+        const store = ready();
+        store.set(partial);
+        store.setSection("experience");
+        store.arrive(experience);
+        expect(store.getState().bubble?.text).toBe(experience.line);
+      }
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      store.endStage();
+      store.setSection("projects");
+      store.setSection("experience");
+      store.arrive(experience); // already spoken: stays quiet, no double speak
+      expect(store.getState().bubble).toBeNull();
+    });
+
+    it("answers whether a section may stage right now, with a stop required", () => {
+      const store = ready();
+      store.setSection("experience");
+      vi.advanceTimersByTime(700);
+      expect(store.canStage("experience")).toBe(true);
+      expect(store.canStage("linkedin")).toBe(false);
+      store.startStage("experience");
+      expect(store.canStage("experience")).toBe(false);
+    });
   });
 });

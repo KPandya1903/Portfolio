@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { nextClip, type ClipInput } from "../clipMachine";
 import type { ClipName } from "../types";
 
-const base: ClipInput = { intro: "done", moving: false, reducedMotion: false, stopClip: "Point", finished: new Set() };
+const base: ClipInput = { intro: "done", moving: false, reducedMotion: false, staging: false, stopClip: "Point", finished: new Set() };
 const done = (...c: ClipName[]) => new Set<ClipName>(c);
 
 describe("nextClip", () => {
@@ -13,6 +13,14 @@ describe("nextClip", () => {
   it("travels while moving", () => {
     expect(nextClip({ ...base, intro: "leaving", moving: true })).toBe("Travel");
     expect(nextClip({ ...base, moving: true })).toBe("Travel");
+  });
+  it("talks while staged (centre stage), but travels on the way there", () => {
+    expect(nextClip({ ...base, staging: true })).toBe("Talk");
+    expect(nextClip({ ...base, staging: true, stopClip: "ThumbsUp" })).toBe("Talk");
+    expect(nextClip({ ...base, staging: true, moving: true })).toBe("Travel");
+  });
+  it("stays idle under reduced motion even if staged", () => {
+    expect(nextClip({ ...base, staging: true, reducedMotion: true })).toBe("Idle");
   });
   it("plays the stop clip on arrival", () => {
     expect(nextClip(base)).toBe("Point");

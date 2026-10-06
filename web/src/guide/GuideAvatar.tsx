@@ -100,8 +100,9 @@ export function GuideAvatar() {
     const stop = stopFor(s.section);
     const v = { w: size.width, h: size.height };
     const inIntro = s.intro === "pending" || s.intro === "hello";
+    const staging = s.stage !== null;
 
-    const anchor = resolveAnchor(stop, s.mode, s.intro, v);
+    const anchor = resolveAnchor(s.mode, s.intro, s.stage !== null, v);
     const world = pxToWorld(anchor, v);
     target.set(world.x, world.y, 0);
     targetScale.setScalar(anchor.heightPx / height);
@@ -131,7 +132,7 @@ export function GuideAvatar() {
     }
 
     const avatarPx = worldToPx(root.current.position, v);
-    const targetX = !inIntro && center.current ? center.current.x : null;
+    const targetX = !inIntro && !staging && center.current ? center.current.x : null;
     yawTarget.set(0, yawToward(targetX, avatarPx.x, MAX_YAW), 0);
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
@@ -139,6 +140,7 @@ export function GuideAvatar() {
     const clip = nextClip({
       intro: s.intro,
       moving,
+      staging,
       reducedMotion: s.reducedMotion,
       stopClip: stop.clip,
       finished: finished.current,
@@ -154,7 +156,7 @@ export function GuideAvatar() {
       } else {
         headBone.getWorldPosition(headWorld);
         const want = lookAngles(
-          inIntro ? null : center.current,
+          inIntro || staging ? null : center.current,
           worldToPx(headWorld, v),
           body.current.rotation.y,
           MAX_HEAD_YAW,

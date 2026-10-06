@@ -28,4 +28,6 @@ export interface GuideState {
   intro: IntroPhase;
   modelReady: boolean;
   bubble: { text: string; key: number } | null;
+  /** Center stage in progress for this section (docs/02), or null. */
+  stage: { sectionId: string } | null;
 }
