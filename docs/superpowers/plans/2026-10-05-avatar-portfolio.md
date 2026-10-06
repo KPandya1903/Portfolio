@@ -1654,19 +1654,19 @@ The skill's reviewer subagent was not dispatched (Kunj did not ask for subagents
 
 ## Post-review changes (review-pass branch)
 
-Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updated to match in `b3af3ec`; `b9e7720` and `d77a89c` also changed docs only.
+Commits after `cbfb166`, oldest first. The spec docs (02, 03, 04, 07) were updated to match in `068da46`; `c848282` and `a0f62a9` also changed docs only.
 
-- `52896a1` fix(guide): free the rail and finish the intro when the guide fails. Adds `FAILED` to the intro machine and `failGuide`, so a crash no longer leaves the rail padding and a dimmed hero behind.
-- `6b450c9` fix(guide): test the error boundary, catch loader failures, hide the toggle without WebGL. Boundary wraps `GuideRoot` in `GuideLoader`; adds `available` to the state and hides the toggle when it is false (`hasWebGL()` in `primeGuideState` already existed).
-- `0d685ca` feat(guide): cache the target centre and turn the head toward it. `useTargetCenter` removes per-frame layout reads; `look.ts` adds the head look.
-- `56dcc9b` refactor(guide): harden target caching and head-look tests. Tests for the cache and for the head offset not stacking.
-- `5cd1d3f` feat(guide): animate the speech bubble in and out. 180 ms in, 120 ms out, with `usePresence` holding the last line during the exit.
-- `9a067b6` fix(guide): animate the whole speech bubble, not just its text. The animation moved to an inner wrapper because the outer element's transform is rewritten every frame.
-- `93b0abb` refactor(guide): harden bubble exit (frozen text, inert, reduced-motion toggle). The leaving bubble freezes its text and is inert; reduced motion drops it at once.
-- `c646da7` test(guide): cover the frozen typewriter and compact hide while leaving.
-- `11eee6b` feat(guide): add a dev-only `?guideDebug=1` overlay. Shows section, intro, clip and anchor values.
-- `3992040` refactor(guide): harden debug overlay stripping and readout. Literal `NODE_ENV` checks at the call sites; `check:prod-strip` verifies `out/`.
-- `8a42897` fix(guide): hide the toggle after a guide failure. `failGuide` also sets `available: false`, because the failed GLB/chunk load is cached and a same-page retry cannot succeed; only a reload retries.
+- `4a01299` fix(guide): free the rail and finish the intro when the guide fails. Adds `FAILED` to the intro machine and `failGuide`, so a crash no longer leaves the rail padding and a dimmed hero behind.
+- `3be4ffa` fix(guide): test the error boundary, catch loader failures, hide the toggle without WebGL. Boundary wraps `GuideRoot` in `GuideLoader`; adds `available` to the state and hides the toggle when it is false (`hasWebGL()` in `primeGuideState` already existed).
+- `2502606` feat(guide): cache the target centre and turn the head toward it. `useTargetCenter` removes per-frame layout reads; `look.ts` adds the head look.
+- `0bee125` refactor(guide): harden target caching and head-look tests. Tests for the cache and for the head offset not stacking.
+- `5f19505` feat(guide): animate the speech bubble in and out. 180 ms in, 120 ms out, with `usePresence` holding the last line during the exit.
+- `b7df1b4` fix(guide): animate the whole speech bubble, not just its text. The animation moved to an inner wrapper because the outer element's transform is rewritten every frame.
+- `1d8a732` refactor(guide): harden bubble exit (frozen text, inert, reduced-motion toggle). The leaving bubble freezes its text and is inert; reduced motion drops it at once.
+- `fde1dc7` test(guide): cover the frozen typewriter and compact hide while leaving.
+- `bc6b6d6` feat(guide): add a dev-only `?guideDebug=1` overlay. Shows section, intro, clip and anchor values.
+- `4da8685` refactor(guide): harden debug overlay stripping and readout. Literal `NODE_ENV` checks at the call sites; `check:prod-strip` verifies `out/`.
+- `13030f7` fix(guide): hide the toggle after a guide failure. `failGuide` also sets `available: false`, because the failed GLB/chunk load is cached and a same-page retry cannot succeed; only a reload retries.
 
 Review findings:
 
@@ -1691,11 +1691,11 @@ Review findings by commit:
 
 | Findings | Commits | What |
 |---|---|---|
-| S5, S7, S11, S13 | `52896a1`, `6b450c9` | Failure handling: rail freed without WebGL and on a crash, `FAILED` event, canvas `tabIndex`, hidden-tab pause; boundary moved into `GuideLoader`, `setRailFreed`, `available` |
-| S3, S1 | `0d685ca`, `56dcc9b` | Cached target centre; head look |
-| S2 | `5cd1d3f`, `9a067b6`, `93b0abb`, `c646da7` | Bubble enter/exit; whole box animates; frozen text, inert, reduced-motion toggle; tests |
-| S4 | `11eee6b`, `3992040` | Dev-only debug overlay; automated `check:prod-strip` |
-| S6, S8, S9, S10, S12, S14 | `b3af3ec` | Docs aligned with the implementation |
-| (docs) | `b9e7720` | Findings mapped to commits; body-yaw description corrected (fixed 0.6 rad turn) |
-| S5 | `8a42897` | `failGuide` also sets `available: false`: the toggle is hidden after a failure, because the failed load is cached and only a reload retries |
-| (docs) | `d77a89c` | Accuracy fixes from the docs review |
+| S5, S7, S11, S13 | `4a01299`, `3be4ffa` | Failure handling: rail freed without WebGL and on a crash, `FAILED` event, canvas `tabIndex`, hidden-tab pause; boundary moved into `GuideLoader`, `setRailFreed`, `available` |
+| S3, S1 | `2502606`, `0bee125` | Cached target centre; head look |
+| S2 | `5f19505`, `b7df1b4`, `1d8a732`, `fde1dc7` | Bubble enter/exit; whole box animates; frozen text, inert, reduced-motion toggle; tests |
+| S4 | `bc6b6d6`, `4da8685` | Dev-only debug overlay; automated `check:prod-strip` |
+| S6, S8, S9, S10, S12, S14 | `068da46` | Docs aligned with the implementation |
+| (docs) | `c848282` | Findings mapped to commits; body-yaw description corrected (fixed 0.6 rad turn) |
+| S5 | `13030f7` | `failGuide` also sets `available: false`: the toggle is hidden after a failure, because the failed load is cached and only a reload retries |
+| (docs) | `a0f62a9` | Accuracy fixes from the docs review |
