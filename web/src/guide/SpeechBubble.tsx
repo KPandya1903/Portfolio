@@ -9,6 +9,8 @@ import { useTypewriter } from "./useTypewriter";
 const COMPACT_HIDE_MS = 5000;
 const TYPE_CPS = 35;
 const EXIT_MS = 120;
+const BOX =
+  "rounded-[14px] border border-accent-cream bg-surface-light px-4 py-3 pr-8 text-sm leading-snug text-text-primary shadow-card-lg";
 
 export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
   const storeBubble = useGuide((s) => s.bubble, store);
@@ -53,10 +55,12 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
       data-state={leaving ? "leaving" : undefined}
       onClick={finish}
       style={{ position: "fixed", left: 0, top: 0, zIndex: 45, width, visibility: "hidden" }}
-      className="rounded-[14px] border border-accent-cream bg-surface-light px-4 py-3 pr-8 text-sm leading-snug text-text-primary shadow-card-lg"
     >
-      {/* The outer element's transform is rewritten every frame, so the animation lives on this wrapper. */}
-      <div key={bubble.key} className={reduced ? undefined : leaving ? "guide-bubble-out" : "guide-bubble-in"}>
+      {/* The outer element's transform is rewritten every frame, so the visible box and its animation live on this wrapper. */}
+      <div
+        key={bubble.key}
+        className={`relative ${BOX} ${reduced ? "" : leaving ? "guide-bubble-out" : "guide-bubble-in"}`}
+      >
         {text}
         <button
           type="button"

@@ -88,6 +88,15 @@ describe("SpeechBubble in and out", () => {
     expect(inner().className).toContain("guide-bubble-in");
   });
 
+  it("animates the whole visual box, not just the text", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    expect(inner().className).toContain("bg-surface-light");
+    expect(inner().className).toContain("border");
+    expect(screen.getByTestId("guide-bubble").className).not.toContain("bg-surface-light");
+  });
+
   it("stays up as leaving for 120 ms after the line is cleared, then unmounts", () => {
     store.set({ reducedMotion: false });
     render(<SpeechBubble store={store} />);
