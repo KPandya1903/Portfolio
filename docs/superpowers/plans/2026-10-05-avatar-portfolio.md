@@ -1649,3 +1649,22 @@ The skill's reviewer subagent was not dispatched (Kunj did not ask for subagents
 - Every reference defect in docs/01 R1 has a guard: single store (Task 8), no clip timers (Task 6), no per-frame allocation (Task 11), real listener cleanup (Tasks 10–12), no leva, `htmlFor` (none needed: no form).
 - Kunj's decisions D1–D5 map to Task 14 (look-alike), `compact` mode (Tasks 5, 13), session-once intro without skip (Tasks 7, 10, 13), no audio (nothing plays sound), rail (Tasks 9, 13).
 - Known risk: `stopFor` returns the hero stop while `section` is null, so on a mid-page reload the avatar heads to the hero spot for one frame before the observer fires. Harmless (it is placed without damping on the first frame and immediately retargets).
+
+---
+
+## Post-review changes (review-pass branch)
+
+Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updated to match in `docs: align spec with the reviewed implementation`.
+
+- `52896a1` fix(guide): free the rail and finish the intro when the guide fails. Adds `FAILED` to the intro machine and `failGuide`, so a crash no longer leaves the rail padding and a dimmed hero behind.
+- `6b450c9` fix(guide): test the error boundary, catch loader failures, hide the toggle without WebGL. Boundary wraps `GuideRoot` in `GuideLoader`; `hasWebGL()` runs in `primeGuideState` and sets `available: false`.
+- `0d685ca` feat(guide): cache the target centre and turn the head toward it. `useTargetCenter` removes per-frame layout reads; `look.ts` adds the head look.
+- `56dcc9b` refactor(guide): harden target caching and head-look tests. Tests for the cache and for the head offset not stacking.
+- `5cd1d3f` feat(guide): animate the speech bubble in and out. 180 ms in, 120 ms out, with `usePresence` holding the last line during the exit.
+- `9a067b6` fix(guide): animate the whole speech bubble, not just its text. The animation moved to an inner wrapper because the outer element's transform is rewritten every frame.
+- `93b0abb` refactor(guide): harden bubble exit (frozen text, inert, reduced-motion toggle). The leaving bubble freezes its text and is inert; reduced motion drops it at once.
+- `c646da7` test(guide): cover the frozen typewriter and compact hide while leaving.
+- `11eee6b` feat(guide): add a dev-only `?guideDebug=1` overlay. Shows section, intro, clip and anchor values.
+- `3992040` refactor(guide): harden debug overlay stripping and readout. Literal `NODE_ENV` checks at the call sites; `check:prod-strip` verifies `out/`.
+
+Review finding IDs (S1 to S14) are not recorded in the commit messages, so they are not mapped here.

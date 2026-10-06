@@ -123,8 +123,13 @@ var, plus a workflow using `actions/upload-pages-artifact` and `actions/deploy-p
 ## 7. CI (GitHub Actions)
 
 `.github/workflows/ci.yml` runs on every pull request and on `main`: install, lint, typecheck, unit tests, build,
-end-to-end tests against the built `out/`. Free on public repos; private repos on GitHub Free get a monthly
+`npm run check:prod-strip` (fails if the production `out/` contains debug-overlay code), end-to-end tests against
+the built `out/`. Free on public repos; private repos on GitHub Free get a monthly
 minutes allowance that this ~4-minute job fits easily. The full file is in the implementation plan (Task 16).
+
+The e2e tests render WebGL in software (headless Chromium with SwiftShader), so they are CPU-bound. Run them with
+few workers (`npx playwright test --workers=1` locally, especially when the machine is under load); otherwise
+timeouts fail tests that pass in isolation.
 
 ## 8. Cutover from kunjpandya.vercel.app
 

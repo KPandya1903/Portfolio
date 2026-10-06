@@ -11,7 +11,7 @@
 | DOM motion | framer-motion | 12 | Section reveal animations (as on the live site) |
 | 3D | three | 0.186 | — |
 | React renderer for three | @react-three/fiber | 9.8 | React 19 support. Same combo as [R3](01-references.md) |
-| 3D helpers | @react-three/drei | 10.7 | `useGLTF`, `useAnimations`, `useProgress` only |
+| 3D helpers | @react-three/drei | 10.7 | `useGLTF`, `useAnimations` only |
 | Easing | maath | 0.10 | `easing.damp3` / `dampE` ([ADR-0004](adr/0004-maath-over-framer-motion-3d.md)) |
 | Unit tests | Vitest | 5 | Pure guide logic |
 | E2E tests | Playwright | 1.63 | Intro, scroll, modes, reduced motion |
@@ -41,64 +41,75 @@ framer-motion-3d (incompatible with R3F 9), postprocessing (cost without benefit
 ## 3. Runtime component map
 
 ```
-app/layout.tsx  (server)
+app/layout.tsx  (server; inline script sets html[data-guide="off"] before paint if the visitor turned the guide off)
 └─ app/page.tsx  (server; renders all content as static HTML)
-   ├─ <Navbar/>                  client: anchors + <GuideToggle/>
-   ├─ <main class="guide-rail-offset">
+   ├─ <Navbar/>                  client: anchors + <GuideToggle/> (hidden when store.available is false)
+   ├─ <main>                     rail padding is CSS on `main > section` (globals.css), not a class on <main>
    │    <Hero/> <Journey/> <About/> <Experience/> <Projects/> <LinkedIn/> <Skills/> <Contact/>
    │    (each <section id="…">, targets carry data-guide-target="…")
-   └─ <GuideRoot/>               client island, loaded with next/dynamic({ ssr: false })
-        ├─ useGuideEnvironment()    width mode, reduced motion, guide on/off, intro-seen flag
-        ├─ useActiveSection(ids)    IntersectionObserver → store.section
-        ├─ useIntroSequence()       intro state machine driver (timers live here, cleaned up)
-        ├─ <GuideCanvas>            fixed, transparent, pointer-events:none, orthographic camera
-        │    └─ <Suspense fallback={null}>
-        │         └─ <GuideAvatar/>   GLB + clips, per-frame: anchor → damp → yaw → head → clip
-        └─ <SpeechBubble/>          DOM, positioned by the avatar's projected head each frame
+   └─ <GuideLoader/>             client: primeGuideState(), then loads GuideRoot when idle and enabled
+        └─ <GuideErrorBoundary>  failed chunk / GLB / WebGL error → failGuide()
+             └─ <GuideRoot/>     next/dynamic({ ssr: false })
+                  ├─ useGuideEnvironment()    keeps width mode and reduced motion current (matchMedia change events)
+                  ├─ useActiveSection(SECTION_IDS)  IntersectionObserver → store.setSection
+                  ├─ useIntroSequence()       intro state machine driver (timers live here, cleaned up)
+                  ├─ <GuideCanvas>            fixed, transparent, pointer-events:none, orthographic camera
+                  │    └─ <Suspense fallback={null}>
+                  │         └─ <GuideAvatar/>   GLB + clips, per-frame: anchor → damp → yaw → clip → head
+                  ├─ <SpeechBubble/>          DOM, positioned by the avatar's projected head each frame
+                  └─ <GuideDebug/>            dev only, `?guideDebug=1` ([04](04-system-design.md) §9)
 ```
 
 Server components render all text, so the content is in the HTML for crawlers and for no-JS visitors. The guide is
 a client-only island that adds nothing to the server HTML.
 
-## 4. Directory tree (target)
+## 4. Directory tree
 
 ```
 portfolio-3d/
 ├─ README.md
 ├─ docs/                          (this documentation)
-├─ assets/                        source files, NOT deployed
+├─ assets/                        pending Task 14: source files, NOT deployed (does not exist yet)
 │  ├─ avatar/kunj-metaperson.glb  MetaPerson export (D1)
 │  ├─ clips/*.fbx                 Mixamo downloads
 │  └─ build-guide-glb.md          exact commands that produce web/public/guide/kunj.glb
 └─ web/                           the Next.js app (Vercel/Cloudflare root directory)
-   ├─ package.json  next.config.ts  tsconfig.json  postcss.config.mjs  vitest.config.ts  playwright.config.ts
+   ├─ package.json  next.config.ts  tsconfig.json  postcss.config.mjs  vitest.config.mts  playwright.config.ts
    ├─ THIRD_PARTY.md              attribution (sen-3d-resume MIT, RobotExpressive CC0)
    ├─ public/
    │  ├─ guide/robot-expressive.glb   placeholder (CC0)
-   │  ├─ guide/kunj.glb               final avatar + clips (≤ 2.5 MB)
-   │  └─ Kunj_Pandya_Resume.pdf
+   │  ├─ guide/kunj.glb               pending Task 14: final avatar + clips (≤ 2.5 MB), not present yet
+   │  └─ Kunj_Pandya_Resume.pdf  _headers  favicon.svg
    ├─ src/                    (same layout as the live site, so its files copy across unchanged)
    │  ├─ app/            layout.tsx  page.tsx  globals.css  robots.ts  sitemap.ts
    │  ├─ data/           metadata.ts  experience.ts  projects.ts  skills.ts  timeline.ts  education.ts  achievements.ts  linkedinPosts.ts
    │  ├─ components/
-   │  │  ├─ sections/    Navbar  Hero  Journey  About  Experience  Projects  ProjectCarousel  LinkedIn  Skills  Contact
+   │  │  ├─ sections/    Navbar  Hero  Journey  About  Experience  Projects  ProjectCarousel  LinkedIn  Skills  Contact  yearLabels.ts  __tests__/yearLabels.test.ts
    │  │  ├─ ui/          Button  ExperienceCard  ProjectCard  SkillBadge
    │  │  └─ animations/  FadeIn  ScrollReveal
    │  ├─ lib/            constants.ts  utils.ts
    │  ├─ types/          index.ts
    │  └─ guide/
-   │     ├─ config.ts            GUIDE_STOPS, INTRO, MODEL (single source of truth, R2.10)
+   │     ├─ config.ts            GUIDE_STOPS, SECTION_IDS, INTRO, MODEL, stopFor (single source of truth, R2.10)
    │     ├─ types.ts
-   │     ├─ store.ts             external store + useGuide(selector)
-   │     ├─ anchors.ts           pure: anchor → screen px → world
+   │     ├─ store.ts             external store + useGuide(selector, store?)
+   │     ├─ anchors.ts           pure: anchor → screen px → world, yaw, bubble box
    │     ├─ clipMachine.ts       pure: which clip to play
    │     ├─ introMachine.ts      pure: intro phase reducer
-   │     ├─ environment.ts       mode / reduced motion / storage helpers
-   │     ├─ useActiveSection.ts
-   │     ├─ useIntroSequence.ts
-   │     ├─ GuideRoot.tsx  GuideCanvas.tsx  GuideAvatar.tsx  SpeechBubble.tsx  GuideToggle.tsx
-   │     └─ __tests__/           anchors.test.ts  clipMachine.test.ts  introMachine.test.ts  config.test.ts
-   └─ e2e/                       guide.spec.ts
+   │     ├─ look.ts              pure lookAngles; createHeadLook (head-bone offset)
+   │     ├─ environment.ts       storage, WebGL check, primeGuideState, failGuide, setRailFreed
+   │     ├─ bubbleAnchor.ts      shared mutable head position (avatar writes, bubble reads)
+   │     ├─ highlight.ts         flashHighlight (1.6 s ring)
+   │     ├─ debugInfo.ts  shouldShowDebug.ts  GuideDebug.tsx   dev-only overlay
+   │     ├─ useGuideEnvironment.ts  useActiveSection.ts  useIntroSequence.ts
+   │     ├─ useTargetCenter.ts  usePresence.ts  useTypewriter.ts
+   │     ├─ GuideLoader.tsx  GuideErrorBoundary.tsx  GuideRoot.tsx  GuideCanvas.tsx  GuideAvatar.tsx
+   │     ├─ SpeechBubble.tsx  GuideToggle.tsx
+   │     └─ __tests__/           anchors  clipMachine  config  environment  highlight  introMachine  look  shouldShowDebug
+   │                             store  useActiveSection  useGuide  useGuideEnvironment  useIntroSequence  usePresence
+   │                             useTargetCenter  useTypewriter  (.test.ts[x]); components: GuideDebug  GuideErrorBoundary
+   │                             GuideToggle  SpeechBubble
+   └─ e2e/                       guide.spec.ts  content.spec.ts
 ```
 
 The `web/` subfolder layout follows [R2](01-references.md) (app in `web/`, host root directory set to `web`).
@@ -108,28 +119,28 @@ The `web/` subfolder layout follows [R2](01-references.md) (app in `web/`, host 
 ```ts
 // web/src/guide/types.ts
 export type ClipName = "Wave" | "Talk" | "Point" | "Idle" | "Travel" | "ThumbsUp";
+export type StopClip = Exclude<ClipName, "Travel" | "Wave">;
 export type Mode = "wide" | "compact";
 export type IntroPhase = "pending" | "hello" | "leaving" | "done";
 
-/** Screen-space anchor. x is ignored in "wide" mode (the rail centre is used); y is a viewport fraction. */
-export interface Anchor { y: number }
-
 export interface GuideStop {
   id: string;              // must equal a <section id>
-  clip: Exclude<ClipName, "Travel" | "Wave">; // what to play after arriving
+  clip: StopClip;          // what to play after arriving
   target?: string;         // CSS selector to point at and highlight
   line?: string;           // bubble text, ≤ 140 chars, first person
   source?: string;         // where the line's facts come from (content file + field)
-  wide: Anchor;            // anchor in the rail
+  wide: { y: number };     // anchor in the rail: viewport fraction; x is the rail centre
 }
 
 export interface ModelConfig {
   url: string;                          // "/guide/kunj.glb"
   clipMap: Record<ClipName, string>;    // logical clip → clip name inside the GLB
   once: ClipName[];                     // clips played LoopOnce + clampWhenFinished
+  headBone: string;                     // bone the look-at offset is applied to ("Head"; Mixamo: "mixamorigHead")
 }
 
 export interface GuideState {
+  available: boolean;      // false when WebGL2 is missing; the toggle is hidden
   enabled: boolean;
   mode: Mode;
   reducedMotion: boolean;
@@ -140,8 +151,9 @@ export interface GuideState {
 }
 ```
 
-`config.ts` holds `GUIDE_STOPS: GuideStop[]` (one per section, [06](06-guide-script.md)), `INTRO` (line, timings)
-and `MODEL`. Swapping the placeholder robot for Kunj's avatar changes only `MODEL`.
+`config.ts` holds `SECTION_IDS`, `GUIDE_STOPS: GuideStop[]` (one per section except `linkedin`, [06](06-guide-script.md)),
+`INTRO` (line, timings), `MODEL`, and `stopFor(sectionId)`, which returns the stop of the nearest earlier section
+(so `linkedin` uses the `projects` stop). Swapping the placeholder robot for Kunj's avatar changes only `MODEL`.
 
 ## 6. State and data flow
 
@@ -152,23 +164,43 @@ One store, written by three hooks, read by two components. This fixes R1's two-s
  matchMedia / resize ───▶ useGuideEnvironment┼──▶ store (GuideState) ──▶ GuideAvatar (reads in useFrame via getState())
  timers + store events ─▶ useIntroSequence ──┘                     └──▶ SpeechBubble (React subscription)
                                    ▲
- GuideAvatar ── "arrived at stop X" ┘   (store.arrive(id) → sets bubble, adds highlight class)
+ GuideAvatar ── "arrived at stop X" ┘   (store.arrive(stop) → sets bubble; the avatar adds the highlight class)
 ```
 
 Rules:
 - Per-frame code reads `store.getState()` and never calls `setState`; only discrete events write.
 - The store notifies subscribers only when a value changes (same as [R5.3](01-references.md)).
-- Timers exist only in `useIntroSequence` and `SpeechBubble`, and both clear them on unmount and on phase change.
+- Timers, intervals and rAF loops exist only in the places below, and each one is cleared on unmount or when its phase or input changes:
+
+| Where | What | Cleared by |
+|---|---|---|
+| `useIntroSequence` | `LOAD_TIMEOUT` (4 s) and `HELLO_DONE` (4 s) timeouts | effect cleanup; the hello timer also on phase change |
+| `SpeechBubble` | rAF loop following the head; 5 s compact auto-hide timeout | effect cleanup (`cancelAnimationFrame`, `clearTimeout`) |
+| `useTypewriter` | `setInterval` at 35 chars/s | effect cleanup; also when the line is complete |
+| `usePresence` | 120 ms exit-hold timeout | effect cleanup |
+| `highlight.ts` | 1.6 s ring timeout, one per element | cleared and restarted if the same element is flashed again; removes the class itself when it fires |
+| `GuideLoader` | `requestIdleCallback`, or a 1200 ms timeout where it is missing | effect cleanup |
+| `useTargetCenter` | rAF throttle for scroll/resize re-measure | effect cleanup (`cancelAnimationFrame`) |
+| `GuideDebug` | 100 ms poll of `debugInfo` (dev only) | effect cleanup |
 
 ## 7. Module contracts
 
 | Module | Pure? | Input → Output |
 |---|---|---|
-| `anchors.ts` | yes | `(stop, mode, intro, viewport) → { px: {x,y}, heightPx }`; `pxToWorld({x,y}, viewport) → {x,y}` |
-| `clipMachine.ts` | yes | `({ intro, moving, stopClip, reducedMotion, onceDone }) → ClipName` |
-| `introMachine.ts` | yes | `(phase, event) → phase` for events `MODEL_READY`, `HELLO_DONE`, `ARRIVED`, `LEFT_HERO`, `LOAD_TIMEOUT`, `ALREADY_SEEN`, `REDUCED_MOTION` |
-| `store.ts` | no | `getState`, `subscribe`, `set(partial)`, `arrive(stopId)`, `useGuide(selector)` |
-| `useActiveSection.ts` | no | observes `GUIDE_STOPS` ids present in the DOM |
+| `anchors.ts` | yes | `resolveAnchor(stop, mode, intro, viewport) → { x, y, heightPx }`; `pxToWorld`/`worldToPx({x,y}, viewport) → {x,y}`; `yawToward(targetCenterX \| null, avatarX, maxYaw) → rad`; `bubbleBox({x, top}, width, viewportW) → { left, top }`; `modeForWidth(w)` |
+| `clipMachine.ts` | yes | `nextClip({ intro, moving, reducedMotion, stopClip, finished: ReadonlySet<ClipName> }) → ClipName` |
+| `introMachine.ts` | yes | `introReducer(phase, event) → phase` for events `MODEL_READY`, `HELLO_DONE`, `ARRIVED`, `LEFT_HERO`, `LOAD_TIMEOUT`, `FAILED`, `ALREADY_SEEN`, `REDUCED_MOTION` |
+| `look.ts` | `lookAngles` yes; `createHeadLook` holds private scratch state | `lookAngles(target \| null, head, bodyYaw, maxYaw, maxPitch) → { yaw, pitch }`; `createHeadLook().apply(bone, yaw, pitch)` adds the offset on top of the mixer's pose |
+| `store.ts` | no | `getState`, `subscribe`, `set(partial)`, `say(text)`, `dispatchIntro(event)`, `setSection(id)`, `markModelReady()`, `arrive(stop: GuideStop)`; `useGuide(selector, store?)` |
+| `environment.ts` | no | `primeGuideState(store?, matches?, webgl?)`, `failGuide(store?)`, `setRailFreed(freed)`, `readStorage`/`writeStorage(area, key, value)`, `hasWebGL()` |
+| `useActiveSection.ts` | no | observes every `SECTION_IDS` element present in the DOM (including `linkedin`, which has no stop of its own; `stopFor` maps it to the previous stop) |
+| `useGuideEnvironment.ts` | no | subscribes to the width and reduced-motion media queries; writes `mode`, `reducedMotion` |
+| `useTargetCenter.ts` | no | `() → { center, track(el), refresh() }`: cached centre (px) of the pointing target |
+| `usePresence.ts` | no | `(value \| null, exitMs) → { shown, leaving }`: keeps the last value mounted for `exitMs` after it becomes null |
+| `useTypewriter.ts` | no | `(full, key, cps) → { text, finish }` |
+| `GuideLoader.tsx` | no | `primeGuideState()`, then mounts `GuideRoot` inside `GuideErrorBoundary` when idle and `enabled` |
+| `GuideErrorBoundary.tsx` | no | on a render error calls `failGuide` and renders nothing |
+| `debugInfo.ts`, `shouldShowDebug.ts`, `GuideDebug.tsx` | no | dev-only overlay ([04](04-system-design.md) §9) |
 | `GuideAvatar.tsx` | no | loads `MODEL.url`, runs the frame loop ([04](04-system-design.md) §2) |
 
-The three pure modules carry the logic that broke in R1, so they get unit tests first (TDD in the plan).
+The pure modules carry the logic that broke in R1, so they get unit tests first (TDD in the plan).

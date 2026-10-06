@@ -19,8 +19,8 @@ One page, eight sections, in the live site's order. The guide has one **stop** p
 
 | Mode | Width | Avatar | Bubble | Content |
 |---|---|---|---|---|
-| `wide` | ≥ 1280 px | ~42% of viewport height (clamped 260–420 px), standing in a 280 px left rail | Above the avatar's head, inside the rail, max 248 px wide | Shifted right by the rail (`padding-left: 280px` on each `main > section`, so backgrounds stay full width) |
-| `compact` | < 1280 px | 120 px tall, bottom-left corner, 16 px from the edges | Above the avatar, max 220 px wide, auto-hides after 5 s | Full width; nothing shifts |
+| `wide` | ≥ 1280 px | ~42% of viewport height (clamped 260–420 px), standing in a 280 px left rail | Above the avatar's head, inside the rail, fixed 248 px wide | Shifted right by the rail (`padding-left: 280px` on each `main > section`, so backgrounds stay full width) |
+| `compact` | < 1280 px | 120 px tall, bottom-left corner, 16 px from the edges | Above the avatar, fixed 220 px wide, auto-hides after 5 s | Full width; nothing shifts |
 | any + reduced motion | — | Appears at each anchor without travel; Idle clip only | Shown, no typewriter | As above |
 | guide off | — | Not rendered (canvas unmounted) | None | Rail padding removed |
 
@@ -133,9 +133,9 @@ directional light `#FFE2CC` from upper right. No shadows (performance, [04](04-s
 |---|---|---|
 | Avatar travel between anchors | `maath` `damp3`, smoothTime 0.35 s | [R2.5](01-references.md) frame-rate-independent damping |
 | Avatar yaw toward target | `dampE`, 0.25 s, clamp ±70° | [R4.4](01-references.md) per-section rotation |
-| Head toward target | slerp factor 0.15/frame-equivalent, clamp yaw ±40°, pitch ±20° | [R2.8](01-references.md), [R1.6](01-references.md) |
+| Head toward target | `damp` smoothTime 0.15 s on yaw/pitch, clamp yaw ±40°, pitch ±20° | [R2.8](01-references.md), [R1.6](01-references.md) |
 | Clip crossfade | 0.3 s | [R1.5](01-references.md) used 0.5 s |
-| Bubble in / out | opacity + 6 px rise, 180 ms ease-out / 120 ms ease-in | — |
+| Bubble in / out | opacity + 6 px rise, 180 ms ease-out / 120 ms ease-in; on exit the bubble stays mounted for 120 ms, inert, with its text frozen (no exit under reduced motion) | — |
 | Typewriter | 35 characters per second; click finishes the line | [R3.1](01-references.md) |
 | Target highlight ring | 2 px `--color-accent` outline, 2 pulses over 1.6 s | — |
 | Hero dim during intro | opacity 1 → 0.15 in 300 ms, back in 400 ms | — |

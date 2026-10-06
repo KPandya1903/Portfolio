@@ -8,30 +8,44 @@
 idle     GuideRoot chunk loads via next/dynamic(ssr:false), started by requestIdleCallback
          (fallback setTimeout 1200 ms). ~250 KB gzip: three + R3F + drei subset + maath.
 +        <Canvas> mounts; useGLTF fetches /guide/kunj.glb (≤ 2.5 MB, Meshopt).
-ready    drei useProgress reaches 100 → store.modelReady = true → intro machine gets MODEL_READY.
+ready    GuideAvatar's mount effect runs once useGLTF has resolved (Suspense lifted) →
+         store.markModelReady() sets modelReady = true and the intro machine gets MODEL_READY.
 ```
 
 If the model is not ready 4 s after the guide chunk mounts, the intro machine gets `LOAD_TIMEOUT` and goes to
 `done`: the hero is never dimmed, and the avatar appears in the rail whenever loading finishes. A GLB load error
-is caught by an error boundary around the canvas and unmounts the guide quietly (pattern: [R4.1](01-references.md)
-falls back rather than leaving an empty canvas).
+is caught by `GuideErrorBoundary` (wrapping `GuideRoot` inside `GuideLoader`), which unmounts the guide quietly
+(pattern: [R4.1](01-references.md) falls back rather than leaving an empty canvas); see §8.
+
+WebGL is checked before the chunk loads: `primeGuideState` calls `hasWebGL()` (a canvas `getContext("webgl2")`
+probe) from `GuideLoader`'s mount effect. Without WebGL the chunk is never requested; see §8.
 
 ## 2. The frame loop (`GuideAvatar`, inside `useFrame((state, dt) => …)`)
 
 ```
 1. s = store.getState()                                   (no React re-render)
 2. stop = stopFor(s.section)            // hero stop until the visitor scrolls
-3. {px, heightPx} = resolveAnchor(stop, s.mode, s.intro, viewport)
-4. targetWorld = pxToWorld(px, viewport)
-5. damp3(group.position, targetWorld, s.reducedMotion ? 0 : 0.35, dt)
-   damp(scale, heightPx / modelHeight, 0.35, dt)
+3. anchor = resolveAnchor(stop, s.mode, s.intro, viewport)   // { x, y, heightPx }
+4. targetWorld = pxToWorld(anchor, viewport)
+5. damp3(group.position, targetWorld, 0.35, dt); damp3(group.scale, heightPx / modelHeight, 0.35, dt)
+   (placed with no damping on the first frame and always under reduced motion)
 6. moving = distance(group.position, targetWorld) > 4 px
-7. if (!moving && stop.id !== lastArrived) { store.arrive(stop.id); lastArrived = stop.id }
-8. yaw: target element centre (cached rect) left/right of the avatar → dampE to ±0.6 rad, clamp ±70°
-9. clip = nextClip({ intro, moving, stopClip: stop.clip, reducedMotion, onceDone })
+7. if (!moving && intro is not pending/hello && stop.id !== arrivedAt) {
+     store.arrive(stop); refresh target centre; flashHighlight(stop.target) }
+8. yaw: yawToward(targetCentre.x, avatar px x, 0.6 rad) → dampE 0.25 s (snaps under reduced motion).
+   targetCentre is the cached value from useTargetCenter: measured when the stop changes and on arrival,
+   refreshed on passive scroll / resize at most once per frame. The loop does no layout reads. Null during the
+   intro or when the stop has no target → face forward.
+9. clip = nextClip({ intro, moving, reducedMotion, stopClip: stop.clip, finished })
    if clip !== current → fadeOut(current, .3); actions[clip].reset().fadeIn(.3).play()
-10. after the mixer update: head bone slerps toward the target, clamped (R2.8)
-11. write bubble anchor (head position in px) to a shared ref read by SpeechBubble
+10. head look, after the mixer update: lookAngles(targetCentre, head px, body yaw, ±40°, ±20°) → damp
+    yaw/pitch with smoothTime 0.15 s → createHeadLook().apply(headBone, yaw, pitch), which multiplies an offset onto
+    the pose the mixer wrote. Angles are zero under reduced motion, during the intro and without a target.
+    Ordering constraint: drei's useAnimations registers its own frame callback that calls mixer.update; it must
+    run before this loop's callback (same priority → registration order), so GuideAvatar calls useAnimations
+    above its own useFrame. Reordering makes the head look flicker or vanish.
+11. write bubble anchor (avatar x, top of the avatar in px) to the shared bubbleAnchor read by SpeechBubble
+12. non-production builds only: write clip, stop id, target and current x/y/height to debugInfo (§9)
 ```
 
 Allocation rule ([R2.6](01-references.md)): every Vector3/Euler/Quaternion used here is created once at module or
@@ -81,19 +95,21 @@ pending ──MODEL_READY──▶ hello ──HELLO_DONE──▶ leaving ─�
   `INTRO.line`. `HELLO_DONE` fires `INTRO.helloMs` (4000) after the typewriter starts.
 - `leaving`: hero undimmed, avatar travels to the hero stop. `ARRIVED` when it gets there.
 - `done`: write `sessionStorage["guide:intro-seen"] = "1"` (try/catch). Normal stop behaviour.
+- `FAILED`: the guide crashed (error boundary); goes to `done` from any phase.
 - `LEFT_HERO`: the visitor scrolled the hero out of the middle band. There is no skip button (D3), but the page
   never blocks scrolling, so scrolling ends the intro.
-- On mount: if the flag is set → `ALREADY_SEEN`; if reduced motion → `REDUCED_MOTION` (the bubble still shows the
+- Before the chunk mounts (`primeGuideState`): if the flag is set → `ALREADY_SEEN`; if reduced motion → `REDUCED_MOTION` (the bubble still shows the
   hero line on arrival).
 
 ### 4.2 Clip choice (`clipMachine.ts`)
 
 | Condition (first match wins) | Clip |
 |---|---|
-| intro = `hello` and Wave not finished | `Wave` (once) |
-| intro = `hello` | `Talk` |
-| moving and not reduced motion | `Travel` |
-| stop clip is a once-clip and it finished | `Idle` |
+| reduced motion | `Idle` |
+| intro = pending/hello and Wave not finished | `Wave` (once) |
+| intro = pending/hello | `Talk` |
+| moving | `Travel` |
+| stop clip is `ThumbsUp` and it finished | `Idle` (ThumbsUp returns to Idle; `Point` plays once and holds its clamped final pose) |
 | otherwise | stop's clip (`Point`, `Talk`, `Idle`, `ThumbsUp`) |
 
 No timers. Fast scrolling keeps `moving = true`, so the avatar stays in `Travel` until it lands, then plays the clip
@@ -101,8 +117,8 @@ for wherever it landed. That removes [R1.3](01-references.md)'s race.
 
 ### 4.3 Bubble
 
-`store.arrive(stopId)` sets `bubble = { text: stop.line, key: ++n }` if the stop has a line and the stop has not
-spoken yet this page view. Section change → bubble cleared. Wide: stays until the next section. Compact:
+`store.arrive(stop)` sets `bubble = { text: stop.line, key: ++n }` if the intro is `done`, the stop has a line and
+the stop has not spoken yet this page view (during `leaving` it only dispatches `ARRIVED`). Section change → bubble cleared. Wide: stays until the next section. Compact:
 auto-hides after 5 s. The bubble element has `role="status"` and `aria-live="polite"`, plus a close button.
 
 ## 5. Section detection (`useActiveSection`)
@@ -115,8 +131,8 @@ The root is shrunk to a 10% band through the middle of the viewport; whichever s
 Works for sections of any height (Journey is long). Sections not in the DOM (empty LinkedIn) are skipped. The
 store ignores writes of the same id. Compared with [R2.3](01-references.md), this avoids layout reads every frame.
 
-The pointing target's rectangle is cached on arrival and refreshed on `scroll` (passive listener, rAF-throttled)
-and `resize`.
+The pointing target's centre is cached by `useTargetCenter`: measured when the stop changes and on arrival, and
+refreshed on `scroll` (passive listener) and `resize`, rAF-throttled to once per frame.
 
 ## 6. Performance budget
 
@@ -147,8 +163,8 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 
 | Failure | Behaviour |
 |---|---|
-| WebGL unavailable | `GuideCanvas` checks `WebGL2RenderingContext` first; guide stays off, no error shown |
-| GLB 404 / decode error | Error boundary unmounts the guide; intro machine → `done` |
+| WebGL unavailable | `primeGuideState` checks `hasWebGL()` before the chunk loads: `available: false`, `enabled: false`, rail freed, toggle hidden; nothing is persisted, no error shown |
+| GLB 404 / decode error / render crash | `GuideErrorBoundary` calls `failGuide`: intro `FAILED` → `done`, `enabled: false`, rail freed. Not persisted, so the next load tries again; the toggle stays visible and offers a retry |
 | Slow network (model > 4 s) | Intro skipped; avatar appears in the rail later |
 | `sessionStorage`/`localStorage` throws (private mode, blocked) | Intro plays every load; toggle not remembered; nothing breaks |
 | Target selector not found | No yaw, no highlight; clip still plays |
@@ -158,4 +174,9 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 ## 9. Observability
 
 Static site, so no logs. Optional Vercel Web Analytics (free tier) for page views and Web Vitals. A dev-only overlay
-(`?guideDebug=1`, stripped in production builds) shows section, intro phase, current clip and anchor.
+(`?guideDebug=1`, never in production) shows section, intro, mode, reduced motion, clip, stop, target x/y/height
+(where the avatar is heading) and current x/y/height. The avatar writes per-frame values to `debugInfo`
+(non-production only) and `GuideDebug` polls them every 100 ms, so there is no per-frame React state.
+`npm run check:prod-strip` (also a CI step) greps the production `out/` for `guide-debug` / `guideDebug` and fails
+if any debug code shipped. The call sites keep a literal `process.env.NODE_ENV !== "production"` check so the
+bundler can eliminate the code.
