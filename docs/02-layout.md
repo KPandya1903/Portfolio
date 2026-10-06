@@ -19,7 +19,7 @@ One page, eight sections, in the live site's order. The guide has one **stop** p
 
 | Mode | Width | Avatar | Bubble | Content |
 |---|---|---|---|---|
-| `wide` | ≥ 1280 px | ~42% of viewport height (clamped 260–420 px), standing in a 280 px left rail | Above the avatar's head, inside the rail, max 248 px wide | Shifted right by the rail (`padding-left: 280px` on `<main>`) |
+| `wide` | ≥ 1280 px | ~42% of viewport height (clamped 260–420 px), standing in a 280 px left rail | Above the avatar's head, inside the rail, max 248 px wide | Shifted right by the rail (`padding-left: 280px` on each `main > section`, so backgrounds stay full width) |
 | `compact` | < 1280 px | 120 px tall, bottom-left corner, 16 px from the edges | Above the avatar, max 220 px wide, auto-hides after 5 s | Full width; nothing shifts |
 | any + reduced motion | — | Appears at each anchor without travel; Idle clip only | Shown, no typewriter | As above |
 | guide off | — | Not rendered (canvas unmounted) | None | Rail padding removed |

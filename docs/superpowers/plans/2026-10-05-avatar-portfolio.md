@@ -942,7 +942,8 @@ export function flashHighlight(selector: string) {
 ```css
 /* ---- Avatar guide ---- */
 @media (min-width: 1280px) {
-  html:not([data-guide="off"]) main {
+  /* On each section, not on main, so section backgrounds still run full width under the rail. */
+  html:not([data-guide="off"]) main > section {
     padding-left: var(--rail-width);
   }
 }

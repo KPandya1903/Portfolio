@@ -7,6 +7,7 @@ import { Projects } from "@/components/sections/Projects";
 import { LinkedIn } from "@/components/sections/LinkedIn";
 import { Skills } from "@/components/sections/Skills";
 import { Contact } from "@/components/sections/Contact";
+import { GuideLoader } from "@/guide/GuideLoader";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
         <Skills />
         <Contact />
       </main>
+      <GuideLoader />
     </>
   );
 }

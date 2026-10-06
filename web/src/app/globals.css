@@ -47,7 +47,8 @@
 
 /* ---- Avatar guide (docs/02-layout.md) ---- */
 @media (min-width: 1280px) {
-  html:not([data-guide="off"]) main {
+  /* On each section, not on main, so section backgrounds still run full width under the rail. */
+  html:not([data-guide="off"]) main > section {
     padding-left: var(--rail-width);
   }
 }

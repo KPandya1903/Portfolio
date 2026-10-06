@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { NAV_LINKS } from "@/lib/constants";
 import { HiMenu, HiX } from "react-icons/hi";
+import { GuideToggle } from "@/guide/GuideToggle";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -54,10 +55,12 @@ export const Navbar = () => {
                 {link.label}
               </button>
             ))}
+            <GuideToggle />
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-4">
+            <GuideToggle />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-lg hover:bg-surface transition-colors"
