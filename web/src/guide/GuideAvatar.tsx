@@ -9,17 +9,25 @@ import { bubbleAnchor } from "./bubbleAnchor";
 import { nextClip } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
 import { flashHighlight } from "./highlight";
+import { createHeadLook, lookAngles } from "./look";
 import { guideStore } from "./store";
 import type { ClipName } from "./types";
+import { useTargetCenter } from "./useTargetCenter";
 
 const ARRIVE_PX = 4;
 const MAX_YAW = 0.6; // rad (~34°), inside the ±70° limit in docs/02 §5
+const MAX_HEAD_YAW = (40 * Math.PI) / 180; // docs/02 §5
+const MAX_HEAD_PITCH = (20 * Math.PI) / 180;
+// Axis conventions depend on the rig's bone orientation; flip these when a new model looks the wrong way.
+const HEAD_YAW_SIGN = 1;
+const HEAD_PITCH_SIGN = 1;
 const LOGICAL = Object.keys(MODEL.clipMap) as ClipName[];
 
 // Scratch objects: nothing is allocated inside useFrame (R2.6; R1's Background.jsx allocated every frame).
 const target = new THREE.Vector3();
 const targetScale = new THREE.Vector3();
 const yawTarget = new THREE.Euler();
+const headWorld = new THREE.Vector3();
 
 /** The frame loop from docs/04-system-design.md §2. */
 export function GuideAvatar() {
@@ -45,7 +53,10 @@ export function GuideAvatar() {
   const placed = useRef(false);
   const lastStop = useRef<string | null>(null);
   const arrivedAt = useRef<string | null>(null);
-  const targetEl = useRef<Element | null>(null);
+  const { center, track } = useTargetCenter();
+  const headBone = useMemo(() => scene.getObjectByName(MODEL.headBone) ?? null, [scene]);
+  const headLook = useMemo(() => createHeadLook(), []);
+  const headAngles = useRef({ yaw: 0, pitch: 0 });
 
   useEffect(() => {
     guideStore.markModelReady();
@@ -96,7 +107,7 @@ export function GuideAvatar() {
       lastStop.current = stop.id;
       arrivedAt.current = null;
       finished.current.delete(stop.clip);
-      targetEl.current = stop.target ? document.querySelector(stop.target) : null;
+      track(stop.target ? document.querySelector(stop.target) : null);
     }
 
     if (!placed.current || s.reducedMotion) {
@@ -116,11 +127,7 @@ export function GuideAvatar() {
     }
 
     const avatarPx = worldToPx(root.current.position, v);
-    let targetX: number | null = null;
-    if (!inIntro && targetEl.current) {
-      const r = targetEl.current.getBoundingClientRect();
-      targetX = r.left + r.width / 2;
-    }
+    const targetX = !inIntro && center.current ? center.current.x : null;
     yawTarget.set(0, yawToward(targetX, avatarPx.x, MAX_YAW), 0);
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
@@ -133,6 +140,28 @@ export function GuideAvatar() {
       finished: finished.current,
     });
     if (clip !== current.current) play(clip);
+
+    if (headBone) {
+      // After the clip step: drei's mixer already ran this frame, so the bone holds the animated pose.
+      const gaze = !inIntro && !s.reducedMotion ? center.current : null;
+      headBone.getWorldPosition(headWorld);
+      const want = lookAngles(
+        gaze,
+        worldToPx(headWorld, v),
+        body.current.rotation.y,
+        MAX_HEAD_YAW,
+        MAX_HEAD_PITCH,
+      );
+      const angles = headAngles.current;
+      if (s.reducedMotion) {
+        angles.yaw = 0;
+        angles.pitch = 0;
+      } else {
+        easing.damp(angles, "yaw", want.yaw, 0.15, dt);
+        easing.damp(angles, "pitch", want.pitch, 0.15, dt);
+      }
+      headLook.apply(headBone, HEAD_YAW_SIGN * angles.yaw, HEAD_PITCH_SIGN * angles.pitch);
+    }
 
     const heightPx = root.current.scale.y * height;
     bubbleAnchor.x = avatarPx.x;

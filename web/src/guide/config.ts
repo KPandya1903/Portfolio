@@ -71,6 +71,7 @@ export const MODEL: ModelConfig = {
   url: "/guide/robot-expressive.glb",
   clipMap: { Wave: "Wave", Talk: "Yes", Point: "ThumbsUp", Idle: "Idle", Travel: "Walking", ThumbsUp: "ThumbsUp" },
   once: ["Wave", "Point", "ThumbsUp"],
+  headBone: "Head", // Mixamo rigs: "mixamorigHead"
 };
 
 /** The stop for a section, or the nearest earlier section's stop (e.g. LinkedIn → Projects). */

@@ -16,6 +16,8 @@ export interface ModelConfig {
   url: string;
   clipMap: Record<ClipName, string>;
   once: ClipName[];
+  /** Name of the head bone the look-at offset is applied to. */
+  headBone: string;
 }
 
 export interface GuideState {
