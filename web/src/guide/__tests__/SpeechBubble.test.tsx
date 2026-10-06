@@ -130,13 +130,15 @@ describe("SpeechBubble in and out", () => {
     expect(inner().hasAttribute("inert")).toBe(true);
   });
 
-  it("fires its compact auto-hide only once while leaving", () => {
+  it("does not re-arm the compact auto-hide while leaving", () => {
     store.set({ mode: "compact", reducedMotion: false });
     render(<SpeechBubble store={store} />);
     say("Hi");
-    act(() => void vi.advanceTimersByTime(5000));
-    expect(bubble()).not.toBeNull();
+    act(() => store.set({ bubble: null }));
     const spy = vi.spyOn(store, "set");
+    act(() => store.set({ mode: "wide" }));
+    act(() => store.set({ mode: "compact" }));
+    spy.mockClear();
     act(() => void vi.advanceTimersByTime(5000));
     expect(spy).not.toHaveBeenCalled();
     expect(bubble()).toBeNull();

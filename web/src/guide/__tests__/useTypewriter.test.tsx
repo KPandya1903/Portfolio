@@ -1,10 +1,13 @@
 // @vitest-environment happy-dom
-import { act, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTypewriter } from "../useTypewriter";
 
 beforeEach(() => vi.useFakeTimers());
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 const tick = (ms: number) => act(() => void vi.advanceTimersByTime(ms));
 
@@ -45,5 +48,26 @@ describe("useTypewriter", () => {
     tick(100);
     act(() => result.current.finish());
     expect(result.current.text).toBe("Hello");
+  });
+
+  it("freezes where it is when cps drops to 0, and finish() still completes it", () => {
+    const { result, rerender } = renderHook(({ cps }) => useTypewriter("Hello", 1, cps), { initialProps: { cps: 10 } });
+    tick(200);
+    expect(result.current.text).toBe("He");
+    rerender({ cps: 0 });
+    tick(1000);
+    expect(result.current.text).toBe("He");
+    act(() => result.current.finish());
+    expect(result.current.text).toBe("Hello");
+  });
+
+  it("resumes from a frozen partial when cps comes back", () => {
+    const { result, rerender } = renderHook(({ cps }) => useTypewriter("Hello", 1, cps), { initialProps: { cps: 10 } });
+    tick(200);
+    rerender({ cps: 0 });
+    tick(1000);
+    rerender({ cps: 10 });
+    tick(100);
+    expect(result.current.text).toBe("Hel");
   });
 });
