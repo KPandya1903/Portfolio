@@ -140,7 +140,7 @@ export interface ModelConfig {
 }
 
 export interface GuideState {
-  available: boolean;      // false when WebGL2 is missing; the toggle is hidden
+  available: boolean;      // false when WebGL2 is missing or the guide failed; the toggle is hidden
   enabled: boolean;
   mode: Mode;
   reducedMotion: boolean;

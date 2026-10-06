@@ -112,15 +112,18 @@ planned v2 set.
 
 | Token | Light (v1) | Dark (v2, planned) | Use |
 |---|---|---|---|
-| `--color-bg` | `#FAF8F5` | `#1B1512` | Page background, rail |
+| `--color-background` | `#FAF8F5` | `#1B1512` | Page background, rail |
 | `--color-surface` | `#F5F1EB` | `#241C18` | Alternate section background |
-| `--color-surface-raised` | `#FEFDFB` | `#2E2420` | Cards, speech bubble |
-| `--color-text` | `#3E2723` | `#F3ECE7` | Headings, body |
-| `--color-text-muted` | `#6D4C41` | `#C9B8AF` | Secondary text |
-| `--color-accent` | `#5D4037` | `#D7B8A8` | Buttons, links, highlight ring |
-| `--color-border` | `#D7CCC8` | `#4A3B34` | Card and bubble borders |
+| `--color-surface-light` | `#FEFDFB` | `#2E2420` | Cards, speech bubble |
+| `--color-text-primary` | `#3E2723` | `#F3ECE7` | Headings, body |
+| `--color-text-secondary` | `#6D4C41` | `#C9B8AF` | Secondary text |
+| `--color-accent-primary` | `#5D4037` | `#D7B8A8` | Buttons, links, highlight ring |
+| `--color-accent-cream` | `#D7CCC8` | `#4A3B34` | Card and bubble borders |
+| `--color-border` | `rgba(93, 64, 55, 0.08)` | — | Hairlines |
 | `--rail-width` | `280px` | — | Guide rail |
-| `--radius-bubble` | `14px` | — | Bubble corners |
+
+Names and light values are the ones in `web/src/app/globals.css`. The bubble's 14 px corner radius is a literal in
+`SpeechBubble.tsx`, not a token.
 
 Fonts: Inter (body) and JetBrains Mono (code accents), both through `next/font`.
 

@@ -1654,7 +1654,7 @@ The skill's reviewer subagent was not dispatched (Kunj did not ask for subagents
 
 ## Post-review changes (review-pass branch)
 
-Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updated to match in `docs: align spec with the reviewed implementation`.
+Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updated to match in `b3af3ec`; `b9e7720` and `d77a89c` also changed docs only.
 
 - `52896a1` fix(guide): free the rail and finish the intro when the guide fails. Adds `FAILED` to the intro machine and `failGuide`, so a crash no longer leaves the rail padding and a dimmed hero behind.
 - `6b450c9` fix(guide): test the error boundary, catch loader failures, hide the toggle without WebGL. Boundary wraps `GuideRoot` in `GuideLoader`; adds `available` to the state and hides the toggle when it is false (`hasWebGL()` in `primeGuideState` already existed).
@@ -1666,6 +1666,7 @@ Commits after `b876fbf`, oldest first. The spec docs (02, 03, 04, 07) were updat
 - `c646da7` test(guide): cover the frozen typewriter and compact hide while leaving.
 - `11eee6b` feat(guide): add a dev-only `?guideDebug=1` overlay. Shows section, intro, clip and anchor values.
 - `3992040` refactor(guide): harden debug overlay stripping and readout. Literal `NODE_ENV` checks at the call sites; `check:prod-strip` verifies `out/`.
+- `8a42897` fix(guide): hide the toggle after a guide failure. `failGuide` also sets `available: false`, because the failed GLB/chunk load is cached and a same-page retry cannot succeed; only a reload retries.
 
 Review findings:
 
@@ -1697,4 +1698,4 @@ Review findings by commit:
 | S6, S8, S9, S10, S12, S14 | `b3af3ec` | Docs aligned with the implementation |
 | (docs) | `b9e7720` | Findings mapped to commits; body-yaw description corrected (fixed 0.6 rad turn) |
 | S5 | `8a42897` | `failGuide` also sets `available: false`: the toggle is hidden after a failure, because the failed load is cached and only a reload retries |
-| (docs) | this commit (`docs: fix accuracy issues from docs review`) | Accuracy fixes from the docs review |
+| (docs) | `d77a89c` | Accuracy fixes from the docs review |
