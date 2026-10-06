@@ -1,26 +1,46 @@
 @import "tailwindcss";
 
+/* The live site's Tailwind 3 theme, under the same class names (docs/02-layout.md §4). */
+@theme {
+  --color-background: #faf8f5;
+  --color-background-light: #faf8f5;
+  --color-surface: #f5f1eb;
+  --color-surface-light: #fefdfb;
+  --color-text-primary: #3e2723;
+  --color-text-primary-light: #3e2723;
+  --color-text-secondary: #6d4c41;
+  --color-text-secondary-light: #6d4c41;
+  --color-accent-primary: #5d4037;
+  --color-accent-secondary: #8d6e63;
+  --color-accent-hover: #4e342e;
+  --color-accent-cream: #d7ccc8;
+  --color-border: rgba(93, 64, 55, 0.08);
+  --color-border-light: rgba(93, 64, 55, 0.04);
+  --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --shadow-card: 0 1px 3px rgba(62, 39, 35, 0.04), 0 1px 2px rgba(62, 39, 35, 0.06);
+  --shadow-card-hover: 0 10px 15px rgba(62, 39, 35, 0.08), 0 4px 6px rgba(62, 39, 35, 0.04);
+  --shadow-card-lg: 0 20px 25px rgba(62, 39, 35, 0.12), 0 10px 10px rgba(62, 39, 35, 0.04);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rail-width: 280px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-text-primary;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
