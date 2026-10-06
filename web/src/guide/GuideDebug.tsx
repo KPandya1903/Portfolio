@@ -6,10 +6,9 @@ import { guideStore, useGuide, type GuideStore } from "./store";
 const REFRESH_MS = 100;
 const snapshot = () => ({ ...debugInfo });
 type Info = ReturnType<typeof snapshot>;
-const KEYS = Object.keys(debugInfo) as (keyof Info)[];
 /** Same text on screen: strings equal, numbers equal once rounded. */
 const sameDisplay = (a: Info, b: Info) =>
-  KEYS.every((k) => (typeof a[k] === "number" ? Math.round(a[k]) === Math.round(b[k] as number) : a[k] === b[k]));
+  (Object.keys(a) as (keyof Info)[]).every((k) => (typeof a[k] === "number" ? Math.round(a[k]) === Math.round(b[k] as number) : a[k] === b[k]));
 
 /** Dev-only readout (x/y/height are the avatar now; "target" is where it is heading) (docs/04 §9), shown with `?guideDebug=1`. Per-frame values are polled, not React state. */
 export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {

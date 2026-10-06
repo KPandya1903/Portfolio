@@ -127,6 +127,8 @@ test("a failed model load removes the guide and frees the rail", async ({ page }
   await expect(html(page)).toHaveAttribute("data-guide", "off", { timeout: 20_000 });
   await expect(page.getByTestId("guide-canvas")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Guide/ })).toHaveCount(0);
-  expect(await readIntroPhases(page)).not.toContain("hello"); // the hero was never dimmed
+  const phases = await readIntroPhases(page);
+  expect(phases).toContain("pending"); // the recorder captured something, so the next check cannot pass on []
+  expect(phases).not.toContain("hello"); // the hero was never dimmed
   await expect(railPadding(page)).not.toHaveCSS("padding-left", "280px");
 });

@@ -12,6 +12,7 @@ export default defineConfig({
   // The guide renders WebGL in software, which is CPU-bound: parallel workers starve each other and flake.
   workers: 1,
   fullyParallel: false,
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   failOnFlakyTests: !!process.env.CI,
   use: { baseURL: BASE, trace: "on-first-retry" },
   webServer: { command: `npx serve out -l ${PORT}`, url: BASE, reuseExistingServer: !process.env.CI },

@@ -4,7 +4,7 @@
 
 ```
 0 ms     HTML (all content) streams from the CDN. Hero text is the LCP element.
-~100 ms  CSS + fonts. Page is fully usable. Rail padding is in CSS from the start (no layout shift).
+~100 ms  CSS + fonts. Page is fully usable. Rail padding is in CSS from the start, so the normal path has no layout shift (see §6 for the one exception).
 idle     GuideRoot chunk loads via next/dynamic(ssr:false), started by requestIdleCallback
          (fallback setTimeout 1200 ms). ~250 KB gzip: three + R3F + drei subset + maath.
 +        <Canvas> mounts; useGLTF fetches /guide/kunj.glb (≤ 2.5 MB, Meshopt).
@@ -141,7 +141,7 @@ refreshed on `scroll` (passive listener) and `resize`, rAF-throttled to once per
 | Guide JS chunk | ≤ 260 KB gzip | `next build` output; fail review if over |
 | `kunj.glb` | ≤ 2.5 MB | `ls -l` in the asset task; Meshopt + WebP textures 1024² max |
 | LCP (mobile, Lighthouse) | ≤ live site's LCP + 100 ms | Lighthouse before/after |
-| CLS | 0.00 from the guide | Rail padding is static CSS |
+| CLS | 0.00 on the normal path and with the guide turned off | Rail padding is static CSS; a pre-paint inline script in `layout.tsx` frees the rail for visitors who turned the guide off. Exception: freeing the rail after paint (no WebGL2, or GLB/chunk failure) shifts `main > section` 280 px once on wide screens, an accepted trade-off vs. an empty rail |
 | Frame time, wide, M1 Air | ≤ 8 ms (60 fps with headroom) | Chrome Performance panel |
 | Draw calls | ≤ 15 | `renderer.info.render.calls` in dev |
 
@@ -152,7 +152,7 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 ## 7. Accessibility
 
 - All content is server-rendered HTML; the guide repeats nothing that is not already on the page.
-- Canvas: `aria-hidden="true"`, `tabIndex={-1}`, `pointer-events: none`.
+- Canvas: `aria-hidden="true"`, `pointer-events: none`; `tabIndex={-1}` sits on R3F's wrapper div (keeps it out of the Tab order), not on the canvas element.
 - Bubble: `role="status"`, `aria-live="polite"`, close button with `aria-label="Hide guide message"`.
 - Navbar "Guide" toggle: real `<button aria-pressed>`, persisted in `localStorage` (try/catch), following
   [R5.1](01-references.md).
@@ -163,8 +163,8 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 
 | Failure | Behaviour |
 |---|---|
-| WebGL unavailable | `primeGuideState` checks `hasWebGL()` before the chunk loads: `available: false`, `enabled: false`, rail freed, toggle hidden; nothing is persisted, no error shown |
-| GLB 404 / decode error / render crash | `GuideErrorBoundary` calls `failGuide`: intro `FAILED` → `done`, `enabled: false`, `available: false`, rail freed, toggle hidden. Not persisted; a reload retries (the failed GLB/chunk load is cached by drei/suspend-react and `next/dynamic`, so a same-page retry cannot succeed) |
+| WebGL unavailable | `primeGuideState` checks `hasWebGL()` before the chunk loads: `available: false`, `enabled: false`, rail freed, toggle hidden; nothing is persisted, no error shown. Freeing the rail after paint shifts `main > section` 280 px once on wide screens (CLS), accepted vs. an empty rail |
+| GLB 404 / decode error / render crash | `GuideErrorBoundary` calls `failGuide`: intro `FAILED` → `done`, `enabled: false`, `available: false`, rail freed, toggle hidden. Not persisted; a reload retries (the failed GLB/chunk load is cached by drei/suspend-react and `next/dynamic`, so a same-page retry cannot succeed). Same one-time 280 px CLS shift as above |
 | Slow network (model > 4 s) | Intro skipped; avatar appears in the rail later |
 | `sessionStorage`/`localStorage` throws (private mode, blocked) | Intro plays every load; toggle not remembered; nothing breaks |
 | Target selector not found | No yaw, no highlight; clip still plays |

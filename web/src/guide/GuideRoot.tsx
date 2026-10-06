@@ -5,7 +5,7 @@ import { GuideCanvas } from "./GuideCanvas";
 import { GuideDebug } from "./GuideDebug";
 import { shouldShowDebug } from "./shouldShowDebug";
 import { SpeechBubble } from "./SpeechBubble";
-import { useGuide } from "./store";
+import { guideStore, useGuide } from "./store";
 import { useActiveSection } from "./useActiveSection";
 import { useGuideEnvironment } from "./useGuideEnvironment";
 import { useIntroSequence } from "./useIntroSequence";
@@ -30,6 +30,8 @@ export default function GuideRoot() {
     () => () => {
       delete document.documentElement.dataset.guideIntro;
       delete document.documentElement.dataset.guideSection;
+      // Covers toggle-off and failure: re-enabling must not re-type or re-announce the old line.
+      guideStore.set({ bubble: null });
     },
     [],
   );

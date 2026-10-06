@@ -145,7 +145,7 @@ export function GuideAvatar() {
     });
     if (clip !== current.current) play(clip);
 
-    if (headBone) {
+    if (headBone && headLook) {
       // After the clip step: drei's mixer already ran this frame, so the bone holds the animated pose.
       const angles = headAngles.current;
       if (s.reducedMotion) {
@@ -163,7 +163,7 @@ export function GuideAvatar() {
         easing.damp(angles, "yaw", want.yaw, 0.15, dt);
         easing.damp(angles, "pitch", want.pitch, 0.15, dt);
       }
-      headLook?.apply(headBone, HEAD_YAW_SIGN * angles.yaw, HEAD_PITCH_SIGN * angles.pitch);
+      headLook.apply(headBone, HEAD_YAW_SIGN * angles.yaw, HEAD_PITCH_SIGN * angles.pitch);
     }
 
     const heightPx = root.current.scale.y * height;
