@@ -38,3 +38,19 @@ export function resolveAnchor(stop: GuideStop, mode: Mode, intro: IntroPhase, v:
 
 /** Orthographic camera, zoom 1: one world unit is one CSS pixel, origin at the viewport centre (ADR-0002). */
 export const pxToWorld = (p: { x: number; y: number }, v: Viewport) => ({ x: p.x - v.w / 2, y: v.h / 2 - p.y });
+
+export const worldToPx = (p: { x: number; y: number }, v: Viewport) => ({ x: p.x + v.w / 2, y: v.h / 2 - p.y });
+
+/** Turn toward the target's side of the avatar; face forward without one (docs/02 §5). */
+export function yawToward(targetCenterX: number | null, avatarX: number, maxYaw: number): number {
+  if (targetCenterX === null) return 0;
+  return Math.sign(targetCenterX - avatarX) * maxYaw;
+}
+
+const BUBBLE_MARGIN = 12;
+
+/** Bubble sits centred above the head, kept 12 px inside the viewport (docs/02 §3). */
+export function bubbleBox(anchor: { x: number; top: number }, width: number, viewportW: number) {
+  const left = Math.min(Math.max(BUBBLE_MARGIN, anchor.x - width / 2), viewportW - width - BUBBLE_MARGIN);
+  return { left, top: anchor.top - BUBBLE_MARGIN };
+}

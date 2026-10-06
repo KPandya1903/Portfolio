@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { modeForWidth, pxToWorld, resolveAnchor } from "../anchors";
+import { bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
 import type { GuideStop } from "../types";
 
 const stop: GuideStop = { id: "skills", clip: "Point", wide: { y: 0.55 } };
@@ -47,5 +47,39 @@ describe("modeForWidth", () => {
   it("switches at 1280 px", () => {
     expect(modeForWidth(1280)).toBe("wide");
     expect(modeForWidth(1279)).toBe("compact");
+  });
+});
+
+describe("worldToPx", () => {
+  it("inverts pxToWorld", () => {
+    const p = { x: 140, y: 495 };
+    expect(worldToPx(pxToWorld(p, laptop), laptop)).toEqual(p);
+  });
+});
+
+describe("yawToward", () => {
+  it("turns right toward a target on the right", () => {
+    expect(yawToward(800, 140, 0.6)).toBe(0.6);
+  });
+  it("turns left toward a target on the left", () => {
+    expect(yawToward(50, 140, 0.6)).toBe(-0.6);
+  });
+  it("faces forward with no target", () => {
+    expect(yawToward(null, 140, 0.6)).toBe(0);
+  });
+  it("faces forward when the target is straight ahead", () => {
+    expect(yawToward(140, 140, 0.6)).toBe(0);
+  });
+});
+
+describe("bubbleBox", () => {
+  it("centres the bubble over the avatar, 12 px above its head", () => {
+    expect(bubbleBox({ x: 720, top: 300 }, 248, 1440)).toEqual({ left: 596, top: 288 });
+  });
+  it("keeps 12 px from the left edge (rail and compact corner)", () => {
+    expect(bubbleBox({ x: 52, top: 700 }, 220, 390).left).toBe(12);
+  });
+  it("keeps 12 px from the right edge", () => {
+    expect(bubbleBox({ x: 1430, top: 300 }, 248, 1440).left).toBe(1440 - 248 - 12);
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { bubbleBox } from "./anchors";
 import { bubbleAnchor } from "./bubbleAnchor";
 import { guideStore, useGuide } from "./store";
 import { useTypewriter } from "./useTypewriter";
@@ -18,8 +19,8 @@ export function SpeechBubble() {
     const tick = () => {
       const el = ref.current;
       if (el) {
-        const left = Math.min(Math.max(12, bubbleAnchor.x - maxWidth / 2), window.innerWidth - maxWidth - 12);
-        el.style.transform = `translate3d(${left}px, ${bubbleAnchor.top - 12}px, 0) translateY(-100%)`;
+        const { left, top } = bubbleBox(bubbleAnchor, maxWidth, window.innerWidth);
+        el.style.transform = `translate3d(${left}px, ${top}px, 0) translateY(-100%)`;
         el.style.visibility = bubbleAnchor.visible ? "visible" : "hidden";
       }
       raf = requestAnimationFrame(tick);

@@ -4,7 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { easing } from "maath";
 import * as THREE from "three";
-import { pxToWorld, resolveAnchor } from "./anchors";
+import { pxToWorld, resolveAnchor, worldToPx, yawToward } from "./anchors";
 import { bubbleAnchor } from "./bubbleAnchor";
 import { nextClip } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
@@ -115,13 +115,13 @@ export function GuideAvatar() {
       if (stop.target) flashHighlight(stop.target);
     }
 
-    let yaw = 0;
+    const avatarPx = worldToPx(root.current.position, v);
+    let targetX: number | null = null;
     if (!inIntro && targetEl.current) {
       const r = targetEl.current.getBoundingClientRect();
-      const avatarX = root.current.position.x + v.w / 2;
-      yaw = Math.sign(r.left + r.width / 2 - avatarX) * MAX_YAW;
+      targetX = r.left + r.width / 2;
     }
-    yawTarget.set(0, yaw, 0);
+    yawTarget.set(0, yawToward(targetX, avatarPx.x, MAX_YAW), 0);
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
 
@@ -135,8 +135,8 @@ export function GuideAvatar() {
     if (clip !== current.current) play(clip);
 
     const heightPx = root.current.scale.y * height;
-    bubbleAnchor.x = root.current.position.x + v.w / 2;
-    bubbleAnchor.top = v.h / 2 - root.current.position.y - heightPx / 2;
+    bubbleAnchor.x = avatarPx.x;
+    bubbleAnchor.top = avatarPx.y - heightPx / 2;
     bubbleAnchor.visible = true;
   });
 
