@@ -77,3 +77,44 @@ describe("SpeechBubble placement", () => {
     expect(screen.getByTestId("guide-bubble").style.visibility).toBe("hidden");
   });
 });
+
+describe("SpeechBubble in and out", () => {
+  const inner = () => screen.getByTestId("guide-bubble").firstElementChild as HTMLElement;
+
+  it("animates its content in with the enter class", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    expect(inner().className).toContain("guide-bubble-in");
+  });
+
+  it("stays up as leaving for 120 ms after the line is cleared, then unmounts", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    act(() => store.set({ bubble: null }));
+    expect(bubble()).not.toBeNull();
+    expect(screen.getByTestId("guide-bubble").getAttribute("data-state")).toBe("leaving");
+    expect(inner().className).toContain("guide-bubble-out");
+    act(() => void vi.advanceTimersByTime(120));
+    expect(bubble()).toBeNull();
+  });
+
+  it("shows a new line at once during the leave window, with no leaving state", () => {
+    store.set({ reducedMotion: false });
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    act(() => store.set({ bubble: null }));
+    act(() => store.say("Again"));
+    expect(screen.getByTestId("guide-bubble").getAttribute("data-state")).toBeNull();
+    expect(inner().className).toContain("guide-bubble-in");
+  });
+
+  it("disappears at once under reduced motion, with no animation class", () => {
+    render(<SpeechBubble store={store} />);
+    say("Hi");
+    expect(inner().className).not.toContain("guide-bubble-in");
+    act(() => store.set({ bubble: null }));
+    expect(bubble()).toBeNull();
+  });
+});

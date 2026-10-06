@@ -74,7 +74,29 @@ html[data-guide-intro="hello"] #hero > * {
   }
 }
 
+.guide-bubble-in {
+  animation: guide-bubble-in 180ms ease-out both;
+}
+.guide-bubble-out {
+  animation: guide-bubble-out 120ms ease-in both;
+}
+@keyframes guide-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes guide-bubble-out {
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .guide-bubble-in,
+  .guide-bubble-out {
+    animation: none;
+  }
   #hero > * {
     transition: none;
   }

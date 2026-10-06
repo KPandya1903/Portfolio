@@ -3,16 +3,20 @@ import { useEffect, useRef } from "react";
 import { bubbleBox } from "./anchors";
 import { bubbleAnchor } from "./bubbleAnchor";
 import { guideStore, useGuide, type GuideStore } from "./store";
+import { usePresence } from "./usePresence";
 import { useTypewriter } from "./useTypewriter";
 
 const COMPACT_HIDE_MS = 5000;
 const TYPE_CPS = 35;
+const EXIT_MS = 120;
 
 export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
-  const bubble = useGuide((s) => s.bubble, store);
+  const storeBubble = useGuide((s) => s.bubble, store);
   const mode = useGuide((s) => s.mode, store);
   const reduced = useGuide((s) => s.reducedMotion, store);
   const ref = useRef<HTMLDivElement>(null);
+  // Keep the last line mounted while it fades out (docs/02 §5); reduced motion drops it at once.
+  const { shown: bubble, leaving } = usePresence(storeBubble, reduced ? 0 : EXIT_MS);
   const { text, finish } = useTypewriter(bubble?.text ?? "", bubble?.key ?? 0, reduced ? Infinity : TYPE_CPS);
   const width = mode === "wide" ? 248 : 220;
 
@@ -34,10 +38,10 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
 
   // Compact mode: bubbles auto-hide (docs/02 §2).
   useEffect(() => {
-    if (!bubble || mode !== "compact") return;
+    if (!storeBubble || mode !== "compact") return;
     const t = window.setTimeout(() => store.set({ bubble: null }), COMPACT_HIDE_MS);
     return () => window.clearTimeout(t);
-  }, [bubble, mode, store]);
+  }, [storeBubble, mode, store]);
 
   if (!bubble) return null;
   return (
@@ -46,22 +50,26 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
       role="status"
       aria-live="polite"
       data-testid="guide-bubble"
+      data-state={leaving ? "leaving" : undefined}
       onClick={finish}
       style={{ position: "fixed", left: 0, top: 0, zIndex: 45, width, visibility: "hidden" }}
       className="rounded-[14px] border border-accent-cream bg-surface-light px-4 py-3 pr-8 text-sm leading-snug text-text-primary shadow-card-lg"
     >
-      {text}
-      <button
-        type="button"
-        aria-label="Hide guide message"
-        onClick={(e) => {
-          e.stopPropagation();
-          store.set({ bubble: null });
-        }}
-        className="absolute right-2 top-2 text-text-secondary hover:text-text-primary"
-      >
-        ×
-      </button>
+      {/* The outer element's transform is rewritten every frame, so the animation lives on this wrapper. */}
+      <div key={bubble.key} className={reduced ? undefined : leaving ? "guide-bubble-out" : "guide-bubble-in"}>
+        {text}
+        <button
+          type="button"
+          aria-label="Hide guide message"
+          onClick={(e) => {
+            e.stopPropagation();
+            store.set({ bubble: null });
+          }}
+          className="absolute right-2 top-2 text-text-secondary hover:text-text-primary"
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
