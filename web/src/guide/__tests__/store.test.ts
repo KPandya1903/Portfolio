@@ -216,4 +216,60 @@ describe("guide store", () => {
       expect(store.getState().bubble!.key).toBe(first + 1);
     });
   });
+
+  describe("menu and reaction", () => {
+    it("toggles and closes the menu", () => {
+      const store = createGuideStore();
+      store.toggleMenu();
+      expect(store.getState().menuOpen).toBe(true);
+      store.toggleMenu();
+      expect(store.getState().menuOpen).toBe(false);
+      store.toggleMenu();
+      store.closeMenu();
+      expect(store.getState().menuOpen).toBe(false);
+    });
+
+    it("closes the menu when the active section changes, and when a stage starts", () => {
+      const store = createGuideStore();
+      store.toggleMenu();
+      store.setSection("projects");
+      expect(store.getState().menuOpen).toBe(false);
+      store.toggleMenu();
+      store.startStage("projects");
+      expect(store.getState().menuOpen).toBe(false);
+    });
+
+    it("react() sets a wave reaction with a fresh key each time", () => {
+      const store = createGuideStore();
+      store.react();
+      const first = store.getState().reaction;
+      expect(first?.clip).toBe("Wave");
+      store.react();
+      expect(store.getState().reaction?.key).not.toBe(first?.key);
+    });
+
+    it("react() does nothing under reduced motion", () => {
+      const store = createGuideStore();
+      store.set({ reducedMotion: true });
+      store.react();
+      expect(store.getState().reaction).toBeNull();
+    });
+
+    it("requestStage remembers the section until the stage starts", () => {
+      const store = createGuideStore();
+      store.requestStage("skills");
+      expect(store.getState().forcedStage).toBe("skills");
+      store.startStage("skills");
+      expect(store.getState().forcedStage).toBeNull();
+    });
+
+    it("canStage honours forced for an already-staged, barely dwelled section", () => {
+      const store = createGuideStore();
+      store.set({ intro: "done", modelReady: true });
+      store.startStage("skills");
+      store.endStage();
+      expect(store.canStage("skills", { dwellMs: 5000 })).toBe(false);
+      expect(store.canStage("skills", { forced: true, dwellMs: 0 })).toBe(true);
+    });
+  });
 });

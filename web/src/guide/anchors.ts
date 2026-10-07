@@ -28,8 +28,8 @@ export function resolveAnchor(mode: Mode, intro: IntroPhase, staging: boolean, v
   // Center stage: same centre as the intro, a little smaller (compact never stages; the guard keeps the maths total).
   if (staging) return { x: v.w / 2, y: 0.52 * v.h, heightPx: clamp(0.45 * v.h, 260, 420) };
   // Resting spot: bottom-left corner, same for every stop.
-  const heightPx = REST_HEIGHT[mode];
-  return { x: REST_INSET + 0.3 * heightPx, y: v.h - REST_INSET - heightPx / 2, heightPx };
+  const { left, bottom, size } = restingBox(mode);
+  return { x: left + 0.3 * size, y: v.h - bottom - size / 2, heightPx: size };
 }
 
 /** Orthographic camera, zoom 1: one world unit is one CSS pixel, origin at the viewport centre (ADR-0002). */
@@ -45,6 +45,11 @@ export function yawToward(targetCenterX: number | null, avatarX: number, maxYaw:
   if (targetCenterX === null) return 0;
   const dx = targetCenterX - avatarX;
   return Math.abs(dx) < YAW_DEADZONE_PX ? 0 : Math.sign(dx) * maxYaw;
+}
+
+/** The resting robot's box, as fixed-position CSS: the hotspot covers exactly this (see resolveAnchor). */
+export function restingBox(mode: Mode): { left: number; bottom: number; size: number } {
+  return { left: REST_INSET, bottom: REST_INSET, size: REST_HEIGHT[mode] };
 }
 
 const BUBBLE_MARGIN = 12;

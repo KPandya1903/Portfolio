@@ -41,4 +41,13 @@ describe("nextClip", () => {
     const input = { ...base, moving: true };
     expect(nextClip(input)).toBe(nextClip(input));
   });
+  it("waves once when a click reaction is pending, then returns to the stop clip", () => {
+    expect(nextClip({ ...base, reacting: true })).toBe("Wave");
+    expect(nextClip({ ...base, reacting: true, finished: done("Wave") })).toBe("Point");
+  });
+  it("does not wave while moving, staged or under reduced motion", () => {
+    expect(nextClip({ ...base, reacting: true, moving: true })).toBe("Travel");
+    expect(nextClip({ ...base, reacting: true, staging: true })).toBe("Talk");
+    expect(nextClip({ ...base, reacting: true, reducedMotion: true })).toBe("Idle");
+  });
 });

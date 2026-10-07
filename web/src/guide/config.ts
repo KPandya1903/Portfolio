@@ -124,3 +124,15 @@ export const HOVER_LINES: Record<string, string> = {
   "journey-graduation": "MS graduation in May 2027.",
   "journey-full-time": "I can start full-time in June 2027, and I'm open to new-grad software and ML roles now.",
 };
+
+/** Quick-jump chips (the menu opened from the robot). `resume` opens the PDF; any other target is a section id. */
+export const CHIPS: { id: string; label: string; target: "resume" | (typeof SECTION_IDS)[number] }[] = [
+  { id: "resume", label: "Resume", target: "resume" },
+  { id: "projects", label: "Projects", target: "projects" },
+  { id: "experience", label: "Experience", target: "experience" },
+  { id: "skills", label: "Skills", target: "skills" },
+  { id: "contact", label: "Contact", target: "contact" },
+];
+export const RESUME_URL = "/Kunj_Pandya_Resume.pdf";
+/** How long a chip's stage request stays valid while the smooth scroll is still on its way. */
+export const FORCED_STAGE_TTL_MS = 3000;

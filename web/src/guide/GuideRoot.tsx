@@ -2,7 +2,9 @@
 import { useEffect, useState } from "react";
 import { SECTION_IDS } from "./config";
 import { GuideCanvas } from "./GuideCanvas";
+import { GuideChips } from "./GuideChips";
 import { GuideDebug } from "./GuideDebug";
+import { GuideHotspot } from "./GuideHotspot";
 import { shouldShowDebug } from "./shouldShowDebug";
 import { SpeechBubble } from "./SpeechBubble";
 import { guideStore, useGuide } from "./store";
@@ -35,7 +37,7 @@ export default function GuideRoot() {
       delete document.documentElement.dataset.guideIntro;
       delete document.documentElement.dataset.guideSection;
       // Covers toggle-off and failure: re-enabling must not re-type or re-announce the old line.
-      guideStore.set({ bubble: null });
+      guideStore.set({ bubble: null, menuOpen: false });
     },
     [],
   );
@@ -44,6 +46,8 @@ export default function GuideRoot() {
     <>
       <GuideCanvas />
       <SpeechBubble />
+      <GuideHotspot />
+      <GuideChips />
       {process.env.NODE_ENV !== "production" && showDebug && <GuideDebug />}
     </>
   );

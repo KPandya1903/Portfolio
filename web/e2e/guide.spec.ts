@@ -286,3 +286,123 @@ test.describe("no hover reaction", () => {
     });
   });
 });
+
+const hotspot = (page: Page) => page.getByRole("button", { name: "Open guide menu" });
+const menu = (page: Page) => page.locator('nav[aria-label="Guide menu"]');
+const waitForRest = async (page: Page) => {
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+  await expect(hotspot(page)).toBeVisible({ timeout: 10_000 });
+};
+
+test("clicking the robot opens the menu; a section chip scrolls there and stages it", async ({ page }) => {
+  needsWebGL();
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await recordStages(page);
+  await waitForRest(page);
+  await expect(menu(page)).toBeHidden();
+  await expect(hotspot(page)).toHaveAttribute("aria-expanded", "false");
+
+  await hotspot(page).click();
+  await expect(menu(page)).toBeVisible();
+  await expect(hotspot(page)).toHaveAttribute("aria-expanded", "true");
+  await expect(menu(page).getByRole("button")).toHaveCount(5);
+
+  await menu(page).getByRole("button", { name: "Skills" }).click();
+  await expect(menu(page)).toBeHidden(); // closed by the click, not by the scroll
+  await expect(html(page)).toHaveAttribute("data-guide-section", "skills", { timeout: 10_000 });
+  await expect(page.locator("#skills h2")).toBeInViewport();
+  await expect(html(page)).toHaveAttribute(STAGE, "skills", { timeout: 10_000 });
+  await noStage(page);
+  expect(errors).toEqual([]);
+});
+
+test("Escape closes the menu and returns focus to the robot", async ({ page }) => {
+  needsWebGL();
+  await waitForRest(page);
+  await hotspot(page).click();
+  await expect(menu(page)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menu(page)).toBeHidden();
+  await expect(hotspot(page)).toBeFocused();
+  await expect(hotspot(page)).toHaveAttribute("aria-expanded", "false");
+});
+
+test("clicking outside closes the menu", async ({ page }) => {
+  needsWebGL();
+  await waitForRest(page);
+  await hotspot(page).click();
+  await expect(menu(page)).toBeVisible();
+  await page.mouse.click(700, 300);
+  await expect(menu(page)).toBeHidden();
+});
+
+test("the Resume chip opens the PDF in a new tab", async ({ page, context }) => {
+  needsWebGL();
+  await waitForRest(page);
+  await hotspot(page).click();
+  // A headless browser has no PDF viewer, so the new tab never reports a URL: assert the tab opens and asks for the PDF.
+  const popupPromise = context.waitForEvent("page");
+  const pdfRequest = context.waitForEvent("request", (r) => r.url().endsWith("/Kunj_Pandya_Resume.pdf"));
+  await menu(page).getByRole("button", { name: "Resume" }).click();
+  await popupPromise;
+  await pdfRequest;
+  await expect(menu(page)).toBeHidden();
+});
+
+test("the menu works from the keyboard", async ({ page, browserName }) => {
+  needsWebGL();
+  await waitForRest(page);
+  if (browserName === "webkit") await hotspot(page).focus(); // Safari's Tab skips buttons unless the user opts in
+  else {
+    // The hotspot is the last focusable thing in the page, so Shift+Tab from the top wraps straight to it.
+    await page.keyboard.press("Shift+Tab");
+  }
+  await expect(hotspot(page)).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(menu(page)).toBeVisible();
+  if (browserName !== "webkit") {
+    await page.keyboard.press("Tab");
+    await expect(menu(page).getByRole("button", { name: "Resume" })).toBeFocused();
+  }
+  await page.keyboard.press("Escape");
+  await expect(hotspot(page)).toBeFocused();
+});
+
+test.describe("phone menu", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test("opens on tap, stays on screen, and a chip only scrolls", async ({ page }) => {
+    needsWebGL();
+    await recordStages(page);
+    await waitForRest(page);
+    await hotspot(page).click();
+    await expect(menu(page)).toBeVisible();
+    const box = (await menu(page).boundingBox())!;
+    const hot = (await hotspot(page).boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(hot.x + hot.width); // beside the robot, never over it
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    await menu(page).getByRole("button", { name: "Projects" }).click();
+    await expect(page.locator("#projects h2")).toBeInViewport({ timeout: 10_000 });
+    await expect(html(page)).toHaveAttribute("data-guide-section", "projects");
+    await page.waitForTimeout(1500);
+    expect(await readStages(page)).toEqual([]);
+  });
+});
+
+test.describe("reduced motion menu", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("still opens, and a chip only scrolls", async ({ page }) => {
+    needsWebGL();
+    await recordStages(page);
+    await waitForRest(page);
+    await hotspot(page).click();
+    await expect(menu(page)).toBeVisible();
+    await menu(page).getByRole("button", { name: "Skills" }).click();
+    await expect(page.locator("#skills h2")).toBeInViewport({ timeout: 10_000 });
+    await page.waitForTimeout(1500);
+    expect(await readStages(page)).toEqual([]);
+  });
+});

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GUIDE_STOPS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS } from "../config";
+import { FORCED_STAGE_TTL_MS, GUIDE_STOPS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS } from "../config";
 import { createGuideStore, type GuideStore } from "../store";
 import { useStage } from "../useStage";
 
@@ -220,5 +220,65 @@ describe("useStage", () => {
     tick(10_000);
     expect(stage()).toBeNull();
     expect(store.getState().bubble?.text).toBe(line("about"));
+  });
+
+  describe("forced stage (a chip click)", () => {
+    it("stages an already-staged section again once it is active", () => {
+      start();
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS);
+      tick(STAGE_MAX_MS);
+      expect(stage()).toBeNull();
+      expect(store.staged.has("skills")).toBe(true);
+      go("projects");
+      act(() => store.requestStage("skills"));
+      tick(STAGE_MIN_DWELL_MS + 1000);
+      expect(stage()).toBeNull(); // not there yet: nothing staged while the scroll is on its way
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS);
+      expect(stage()).toBe("skills");
+      expect(store.getState().forcedStage).toBeNull();
+    });
+
+    it("stages the current section right away, without a new dwell", () => {
+      start();
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS);
+      tick(STAGE_MAX_MS);
+      tick(5000);
+      act(() => store.requestStage("skills"));
+      tick(0);
+      expect(stage()).toBe("skills");
+    });
+
+    it("does not stage sections passed on the way", () => {
+      start();
+      act(() => store.requestStage("skills"));
+      go("journey");
+      tick(STAGE_MIN_DWELL_MS * 2);
+      expect(stage()).toBeNull();
+      expect(store.staged.has("journey")).toBe(false);
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS);
+      expect(stage()).toBe("skills");
+    });
+
+    it("never overrides reduced motion, and drops the request", () => {
+      store.set({ reducedMotion: true });
+      start();
+      go("skills");
+      act(() => store.requestStage("skills"));
+      tick(STAGE_MIN_DWELL_MS);
+      expect(stage()).toBeNull();
+      expect(store.getState().forcedStage).toBeNull();
+    });
+
+    it("expires if the section is never reached", () => {
+      start();
+      go("journey");
+      act(() => store.requestStage("skills"));
+      tick(FORCED_STAGE_TTL_MS);
+      expect(store.getState().forcedStage).toBeNull();
+    });
   });
 });

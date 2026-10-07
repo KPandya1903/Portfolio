@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { YAW_DEADZONE_PX, bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
+import { YAW_DEADZONE_PX, bubbleBox, modeForWidth, pxToWorld, resolveAnchor, restingBox, worldToPx, yawToward } from "../anchors";
 const laptop = { w: 1440, h: 900 };
 const phone = { w: 390, h: 844 };
 
@@ -103,5 +103,22 @@ describe("bubbleBox", () => {
   });
   it("keeps 12 px from the right edge", () => {
     expect(bubbleBox({ x: 1430, top: 300 }, 248, 1440).left).toBe(1440 - 248 - 12);
+  });
+});
+
+describe("restingBox", () => {
+  it("is the corner box the resting avatar occupies: 16 px in, as tall as the rest height", () => {
+    expect(restingBox("wide")).toEqual({ left: 16, bottom: 16, size: 140 });
+    expect(restingBox("compact")).toEqual({ left: 16, bottom: 16, size: 120 });
+  });
+  it("contains the resting anchor, so the hotspot sits over the robot", () => {
+    for (const [mode, v] of [["wide", laptop], ["compact", phone]] as const) {
+      const box = restingBox(mode);
+      const a = resolveAnchor(mode, "done", false, v);
+      expect(a.heightPx).toBe(box.size);
+      expect(a.y).toBe(v.h - box.bottom - box.size / 2);
+      expect(a.x).toBeGreaterThan(box.left);
+      expect(a.x).toBeLessThan(box.left + box.size);
+    }
   });
 });

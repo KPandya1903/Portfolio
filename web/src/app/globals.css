@@ -85,6 +85,18 @@ html[data-guide-intro="hello"] #hero > * {
   }
 }
 
+/* The transparent click target over the resting robot: invisible until a keyboard user focuses it. */
+.guide-hotspot {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 24px;
+}
+.guide-hotspot:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: -4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .guide-bubble-in,
   .guide-bubble-out {

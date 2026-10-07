@@ -15,12 +15,16 @@ export const INITIAL_STATE: GuideState = {
   bubble: null,
   stage: null,
   hover: null,
+  menuOpen: false,
+  reaction: null,
+  forcedStage: null,
 };
 
 /** One store, discrete writers only; per-frame code reads getState() (docs/03 §6). */
 export function createGuideStore(initial: GuideState = INITIAL_STATE) {
   let state = initial;
   let bubbleKey = 0;
+  let reactionKey = 0;
   const listeners = new Set<() => void>();
   const spoken = new Set<string>();
   const staged = new Set<string>();
@@ -68,7 +72,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       sectionSince = Date.now();
       // A section change interrupts a running stage (the robot walks back at once).
       const introCutShort = id !== "hero" && (state.intro === "hello" || state.intro === "leaving");
-      set({ section: id, bubble: null, stage: null, hover: null });
+      set({ section: id, bubble: null, stage: null, hover: null, menuOpen: false });
       // The section that ended the intro is never staged: the robot is mid-walk to its corner and would bounce back to centre.
       if (introCutShort) staged.add(id);
       if (id !== "hero") dispatchIntro("LEFT_HERO");
@@ -80,7 +84,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     canStage,
     startStage(id: string) {
       staged.add(id);
-      set({ stage: { sectionId: id }, hover: null });
+      set({ stage: { sectionId: id }, hover: null, menuOpen: false, forcedStage: null });
       const stop = GUIDE_STOPS.find((s) => s.id === id);
       if (stop) speakOnce(stop);
     },
@@ -89,6 +93,21 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       if (state.intro !== "done" || !state.modelReady) return;
       const stop = GUIDE_STOPS.find((s) => s.id === id);
       if (stop) speakOnce(stop);
+    },
+    toggleMenu() {
+      set({ menuOpen: !state.menuOpen });
+    },
+    closeMenu() {
+      set({ menuOpen: false });
+    },
+    /** A click on the robot: wave once (a new key replays it). No reaction under reduced motion. */
+    react() {
+      if (state.reducedMotion) return;
+      set({ reaction: { clip: "Wave", key: ++reactionKey } });
+    },
+    /** A chip wants this section staged (forced) when it becomes active; useStage consumes or expires the request. */
+    requestStage(id: string) {
+      set({ forcedStage: id });
     },
     endStage() {
       set({ stage: null });

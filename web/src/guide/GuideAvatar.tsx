@@ -59,6 +59,8 @@ export function GuideAvatar() {
   const placed = useRef(false);
   const lastStop = useRef<string | null>(null);
   const arrivedAt = useRef<string | null>(null);
+  const reactionKey = useRef<number | null>(null);
+  const reacting = useRef(false);
   const { center, track, refresh } = useTargetCenter();
   const { pointer, isActive } = usePointer();
   const headBone = useMemo(() => scene.getObjectByName(MODEL.headBone) ?? null, [scene]);
@@ -151,6 +153,16 @@ export function GuideAvatar() {
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
 
+    // A click on the robot waves once (only while resting in the corner); the key says which click is new.
+    if (s.reaction && s.reaction.key !== reactionKey.current) {
+      reactionKey.current = s.reaction.key;
+      if (resting && !moving && !s.reducedMotion) {
+        reacting.current = true;
+        finished.current.delete(s.reaction.clip);
+      }
+    }
+    if (reacting.current && finished.current.has("Wave")) reacting.current = false;
+
     const clip = nextClip({
       intro: s.intro,
       moving,
@@ -158,6 +170,7 @@ export function GuideAvatar() {
       reducedMotion: s.reducedMotion,
       stopClip: stop.clip,
       finished: finished.current,
+      reacting: reacting.current,
     });
     if (clip !== current.current) play(clip);
 

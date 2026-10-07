@@ -32,4 +32,10 @@ export interface GuideState {
   stage: { sectionId: string } | null;
   /** The marked item the robot is looking at because of a hover (the avatar derives the gaze from it), or null. */
   hover: { id: string } | null;
+  /** The quick-jump menu (opened from the robot) is open. */
+  menuOpen: boolean;
+  /** A one-shot reaction to a click on the robot; a new key replays it. */
+  reaction: { clip: "Wave"; key: number } | null;
+  /** A chip asked for this section to be staged (forced) once it becomes active. */
+  forcedStage: string | null;
 }
