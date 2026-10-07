@@ -41,7 +41,7 @@ A guard test can pass against an empty stub; each was then shown to fail against
 | Mutant | Tests that failed |
 |---|---|
 | `<GuideLoader />` removed | intro, scrolling, reduced motion, guide off |
-| rail CSS removed | reserves the rail |
+| rail CSS removed | reserves the rail (the rail was removed on 2026-10-06; this row is historical) |
 | avatar never calls `arrive` | intro, scrolling, reduced motion |
 | `flashHighlight` call removed | scrolling |
 | compact avatar centred | phone |

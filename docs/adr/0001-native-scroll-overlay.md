@@ -19,4 +19,4 @@ Read the active section from the DOM with an IntersectionObserver ([R2.3] reads 
 + Content is in the static HTML (SEO, no-JS).
 + The guide can be turned off entirely without affecting content.
 - The avatar cannot be "inside" the scene with content (no 3D project cards like R1's carousel). Accepted: not a goal.
-- The canvas sits above content, so the avatar can cover content; handled by the rail ([02 layout]) and a small corner size on narrow screens.
+- The canvas sits above content, so the avatar can cover content; handled by keeping the resting robot small (140 px, 120 px on compact) in the bottom-left corner ([02 layout]), with one transparent button over it as the only click target.

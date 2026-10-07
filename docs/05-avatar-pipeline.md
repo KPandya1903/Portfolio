@@ -1,5 +1,7 @@
 # 05 — Avatar pipeline (Kunj's to-do list)
 
+> **Dropped on 2026-10-06** ([00-overview](00-overview.md) D11): the CC0 robot stays and nothing below is scheduled. Kept in case the decision is reversed. Where this doc says the avatar stands in a rail or points from there, read "rests in the bottom-left corner" ([02-layout](02-layout.md)).
+
 Goal: one file, `web/public/guide/kunj.glb`, at most 2.5 MB, holding Kunj's look-alike avatar and six animation
 clips. Until it exists the site runs on the CC0 robot placeholder, so none of this blocks development.
 

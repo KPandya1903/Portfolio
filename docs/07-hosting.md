@@ -56,6 +56,8 @@ Prerequisites: GitHub account `KPandya1903` active (`gh auth status` shows it as
 dashboard is used, not the CLI: the Vercel CLI on this machine is logged in to a different account that cannot
 see Kunj's Vercel projects.
 
+Steps 1-2 are the original plan (new repo); [§4.1](#41-what-was-actually-set-up-a-separate-project-for-the-3d-branch) says what was done instead.
+
 1. Create the repo (Kunj approves first; this publishes code):
    ```bash
    cd ~/Desktop/Prep/portfolio-3d
@@ -75,6 +77,30 @@ see Kunj's Vercel projects.
 4. Deploy. The site appears at `portfolio-3d-<hash>.vercel.app`. In **Settings → Domains** add a cleaner alias
    such as `kunjpandya-3d.vercel.app` if it is free.
 5. Every branch push now gets a preview URL; `main` deploys to production.
+
+### 4.1 What was actually set up: a separate project for the `3d` branch
+
+The code lives on the `3d` branch of `KPandya1903/Portfolio` (the live site's repo), not in a new `portfolio-3d` repo, so
+steps 1-2 above were replaced by this:
+
+| Item | Value |
+|---|---|
+| Vercel project | `portfolio-portfolio`, separate from the project that serves kunjpandya.vercel.app |
+| Repo / branch | `KPandya1903/Portfolio`, branch `3d` |
+| Root Directory | `web` (the old site's files sit at the repo root; the new app is in `web/`) |
+| Framework / build | Next.js, `npm run build` (static export), Node 22 |
+| Deploys | Push to `3d`. The old project keeps building `main` and is unaffected |
+| Headers | `web/vercel.json` applies because Root Directory is `web` (immutable cache for `/guide/*`, `nosniff`, referrer policy) |
+
+To stop the old project from also building the `3d` branch (and spending a build on every push), give it an Ignored
+Build Step (Settings → Git) that skips every branch except `main`:
+
+```bash
+test "$VERCEL_GIT_COMMIT_REF" != "main"   # exit 0 = skip the build
+```
+
+Pushing a commit to `3d` is the way to trigger a deploy (an empty chore commit was used to trigger the first preview
+for the new project).
 
 Headers (cache the model forever, it is versioned by filename): `web/vercel.json`
 ```json
@@ -127,9 +153,14 @@ var, plus a workflow using `actions/upload-pages-artifact` and `actions/deploy-p
 the built `out/`. Free on public repos; private repos on GitHub Free get a monthly
 minutes allowance that this ~4-minute job fits easily. `.github/workflows/ci.yml` is the source of truth; the copy in the implementation plan (Task 16) predates `check:prod-strip`.
 
-The e2e tests render WebGL in software (headless Chromium with SwiftShader), so they are CPU-bound. Run them with
-few workers (`npx playwright test --workers=1` locally, especially when the machine is under load); otherwise
-timeouts fail tests that pass in isolation.
+The e2e tests (`npm run e2e`) run in Chromium, Firefox and WebKit with one worker (`playwright.config.ts`); CI
+installs all three browsers (cached by Playwright version), retries a failing test once with a trace
+(`trace: "on-first-retry"`), and fails the job if a test only passes on retry (`failOnFlakyTests`). They render WebGL
+in software (headless Chromium with SwiftShader), so they are CPU-bound; the single worker keeps parallel tests from
+starving each other. `npm run e2e:chromium` runs one project. A missing WebGL2 fails the Chromium project; Firefox and
+WebKit skip the guide tests silently unless `E2E_REQUIRE_WEBGL` is set (not yet set in CI). On failure CI uploads
+`web/playwright-report` and `web/test-results`. Note: CI triggers on pull requests and on pushes to `main`, not on
+pushes to `3d`.
 
 ## 8. Cutover from kunjpandya.vercel.app
 
@@ -137,8 +168,8 @@ timeouts fail tests that pass in isolation.
 |---|---|---|
 | 1. Side by side | New site on its own URL; the live site unchanged | Done criteria in [00](00-overview.md) all ticked |
 | 2. Compare | Lighthouse both sites, mobile preset, 3 runs each, median | New site's LCP ≤ live + 100 ms; Performance ≥ 85 |
-| 3. Switch | In the Vercel dashboard (the team that owns the live project): remove `kunjpandya.vercel.app` from the old project's Domains, add it to `portfolio-3d` | `curl -sI https://kunjpandya.vercel.app` returns the new build (check `robots.txt` points at the new sitemap) |
-| 4. Keep | Leave the old project deployed but unaliased for 30 days | — |
+| 3. Switch | In the Vercel dashboard (the team that owns the live project): remove `kunjpandya.vercel.app` from the old project's Domains, add it to the `3d` project (`portfolio-portfolio`). The cutover is only this domain move; no code moves. A domain serves a project's Production Branch, so make `3d` that project's Production Branch (or merge `3d` into `main`) first | `curl -sI https://kunjpandya.vercel.app` returns the new build (check `robots.txt` points at the new sitemap) |
+| 4. Keep | Leave the old project deployed but unaliased for 30 days (remove its Ignored Build Step if you want it to build again) | — |
 | 5. Analytics | Move the Google Analytics tag (`G-L4J7CCTJVB`, in the live layout) to the new site only at stage 3, so test traffic doesn't pollute it | — |
 
 Rollback at any stage: Vercel **Deployments → … → Instant Rollback** (or move the domain back), Cloudflare

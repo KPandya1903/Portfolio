@@ -5,7 +5,7 @@
 
 ## Context
 R1 positions the avatar in world units (`y: -viewport.height * 2 + 0.5`), tuned by eye for one window size, so the
-avatar drifts relative to content on other sizes. Our anchors are defined in screen space (rail centre, a fraction
+avatar drifts relative to content on other sizes. Our anchors are defined in screen space (a corner inset, the screen centre, a fraction
 of viewport height), and the speech bubble must be placed at the avatar's head in screen pixels every frame.
 
 ## Decision

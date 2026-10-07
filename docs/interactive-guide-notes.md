@@ -1,0 +1,18 @@
+# Interactive guide: open questions and known trade-offs
+
+State as of 2026-10-07. Each item says what is true in the code now and what is undecided.
+
+| # | Item | Current behaviour | Needs |
+|---|---|---|---|
+| 1 | Hero dim vs accessibility | During the intro the hero is dimmed to 15% opacity (`html[data-guide-intro="hello"] #hero > *` in `globals.css`). Lighthouse flagged `color-contrast` on the name, title and location: accessibility 92 against the live site's 96 and the budget of 95 ([perf-2026-10-05](perf-2026-10-05.md)). The measurement predates the corner layout; the dim itself is unchanged | Kunj's choice: keep it (92), blur the hero instead of fading it, or dim less (40% still fails contrast). Re-run Lighthouse afterwards |
+| 2 | NutriSense 96.41% | `HOVER_LINES["project-nutrisense"]` and the project card state 96.41% test accuracy; the figure is from `projects.ts` | Kunj to confirm it against the NutriSense repo |
+| 3 | FleetIQ 591 matched pairs | `HOVER_LINES["project-fleetiq"]` says 98.15% OCR success and 591 matched entry-exit pairs, from `projects.ts` | Kunj to confirm both numbers against the FleetIQ repo |
+| 4 | Edara stays private | The Edara hover line says it is a private repo and to ask Kunj for a walkthrough; the card has no link | Nothing; do not add a link |
+| 5 | Hover is mouse-only | `useHoverReaction` handles `pointerover` / `pointerout` with `pointerType === "mouse"`. Touch, pen and keyboard focus never trigger it; there is no `focusin` / `focusout` handling | Decide whether keyboard users should get hover lines (they would need their own cooldown and a way not to announce on every Tab) |
+| 6 | The hotspot blocks the corner | The click target is a 140 px box (120 px on compact) at the bottom-left, z 42. Links or text under that box on the page cannot be clicked while the robot rests there | Accept, or shrink the hotspot to the robot's body, or move the robot when content sits there |
+| 7 | `E2E_REQUIRE_WEBGL` | Chromium fails if WebGL2 is missing; Firefox and WebKit skip the guide tests silently when they have no WebGL2, unless `E2E_REQUIRE_WEBGL` is set. CI does not set it | After one Linux CI run shows Firefox and WebKit have WebGL2, set `E2E_REQUIRE_WEBGL=1` in `.github/workflows/ci.yml` |
+| 8 | 4 s `LOAD_TIMEOUT` on slow CI | `INTRO.loadTimeoutMs` = 4000. If the model takes longer (software WebGL on a loaded runner), the intro is skipped and tests that wait for `data-guide-intro="hello"` can fail. E2E waits use up to 25 s for `done`, but a skipped intro changes what is observed | Watch for flakes on CI (`failOnFlakyTests` makes them fail the job); raise the timeout for tests only if it happens |
+| 9 | Forced stage does not repeat the line | A chip's forced stage of a section whose line was already spoken walks to the centre but says nothing (`speakOnce`), and the bubble was cleared by the section change | Decide whether a re-stage should repeat the line |
+| 10 | Guide chunk size | 268.6 KB gzip against a 260 KB budget, measured before the interactive features | Re-measure |
+| 11 | CLS and Lighthouse on the corner build | The 0.000 CLS was measured with the rail. The guide now changes no layout, so a shift is not expected, but it was not re-measured | Re-run Lighthouse on the Vercel preview |
+| 12 | Cutover not done | `kunjpandya.vercel.app` still points at the old project ([07-hosting](07-hosting.md) §8) | Done criteria in [00-overview](00-overview.md), then move the domain |

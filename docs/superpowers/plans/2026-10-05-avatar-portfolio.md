@@ -1699,3 +1699,27 @@ Review findings by commit:
 | (docs) | `c848282` | Findings mapped to commits; body-yaw description corrected (fixed 0.6 rad turn) |
 | S5 | `13030f7` | `failGuide` also sets `available: false`: the toggle is hidden after a failure, because the failed load is cached and only a reload retries |
 | (docs) | `a0f62a9` | Accuracy fixes from the docs review |
+
+### Commits after the docs review (`a0f62a9`)
+
+The commit hashes above and below are the ones after the history rewrite (`ddbed32`). Oldest first.
+
+- `8716c6e` docs: align token table and final notes with the code.
+- `43e3f1d` test(e2e): run in Chromium, Firefox and WebKit; cover the guide failure path.
+- `e8bb9c6` test(e2e): exercise the no-WebGL path by removing `webgl2` from canvas contexts.
+- `f366d72` test(e2e): fail on missing WebGL in Chromium, record intro phases with a MutationObserver (`e2e/helpers.ts`), harden CI (browser cache, `failOnFlakyTests`, one worker, trace on first retry).
+- `92a4761` chore(guide): final review cleanups: prod-strip check also greps `curHeightPx`, CLS docs, bubble reset when `GuideRoot` unmounts.
+- `ddbed32` docs: update commit references after the history rewrite.
+- `36c8288` chore: empty commit to trigger a Vercel preview for the separate `3d` project.
+- `f2bce31` docs: plan the interactive companion ([2026-10-06-interactive-guide.md](2026-10-06-interactive-guide.md)).
+- `2f8359c` feat(guide): replace the left rail with a bottom-left corner companion. `RAIL_WIDTH`, `--rail-width`, the rail padding, the pre-paint script, `data-guide`, `setRailFreed` and `GuideStop.wide` are gone; `restingBox` defines the resting spot.
+- `ecb2a8e` feat(guide): center stage at each new section (`stageRules.ts`, `useStage.ts`, store `stage` / `staged`, Talk clip, `data-guide-stage`).
+- `45b9b57` fix(guide): never lose a section line and wait for the model before staging (`skipStage`, `modelReady` in the stage rules).
+- `39b1ea0` feat(guide): the robot follows the cursor while resting (`usePointer.ts`, `pickGaze` in `look.ts`).
+- `2d75abd` feat(guide): react to hovered cards and entries (`hoverRules.ts`, `useHoverReaction.ts`, `hoverIds.ts`, `HOVER_LINES`, `data-guide-hover` markup).
+- `e572e61` fix(guide): accurate hover lines and no hover before a pending stage (`stagePending` gate).
+- `241e061` feat(guide): click the robot to open a quick-jump menu (`GuideHotspot.tsx`, `GuideChips.tsx`, `chips.ts`, `menuOpen`, `reaction`, `forcedStage`).
+- `7b7b6c3` fix(guide): gate the menu on the model, keep focus, never expire an arrived forced stage.
+
+Statements above about the rail (`setRailFreed`, `RAIL_WIDTH`, the 280 px padding, `wide.y`) and in the Task 1-16 text
+describe the plan as first written; the spec docs 00-07 describe the current code.
