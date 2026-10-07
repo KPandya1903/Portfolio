@@ -113,3 +113,8 @@ html[data-guide-intro="hello"] #hero > * {
     animation: none;
   }
 }
+
+/* A section focused programmatically (a chip) is not a keyboard target: no outline unless focus-visible. */
+[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
+}

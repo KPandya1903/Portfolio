@@ -185,7 +185,7 @@ directional light `#FFE2CC` from upper right. No shadows (performance, [04](04-s
 | Typewriter | 35 characters per second; click finishes the line | [R3.1](01-references.md) |
 | Target highlight ring | 2 px `--color-accent-primary` outline, 2 pulses over 1.6 s | — |
 | Hero dim during intro | opacity 1 → 0.15 in 300 ms, back in 400 ms | — |
-| Center stage | Walk out and back use the same `damp3` (0.35 s) as any travel; the stage lasts `min(4.5 s, typing time + 3.5 s hold)`, which is 4.5 s for every current line (the walk out counts against the cap); scale target 45% of viewport height, clamp 260–420 px | Plan 2026-10-06 |
+| Center stage | Walk out and back use the same `damp3` (0.35 s) as any travel; every stage lasts a fixed 4.5 s (`STAGE_MAX_MS`; the walk out counts against it, and every current line types well within it); scale target 45% of viewport height, clamp 260–420 px | Plan 2026-10-06 |
 | Chips menu in / out | Same `guide-bubble-in` (180 ms ease-out, 6 px rise) and `guide-bubble-out` (120 ms ease-in) classes as the bubble; held mounted 120 ms while leaving; no animation under reduced motion | — |
 | Click reaction | `Wave` clip once (crossfade 0.3 s), only while resting and not moving; a stage or a walk cancels it with no replay | — |
 | Cursor look | Head: `damp` 0.15 s toward the mouse, clamp yaw ±40° / pitch ±20°; body: `dampE` 0.25 s, turns 0.6 rad toward the gaze's side, forward inside a 40 px dead zone. Active for 2 s after the last mouse move, only while resting on a wide screen | Plan 2026-10-06 |

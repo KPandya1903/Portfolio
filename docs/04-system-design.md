@@ -144,8 +144,7 @@ Who sets `bubble = { text, key: ++n }`:
 
 Each section's line is spoken at most once per page view (`spoken`). A section change clears the bubble. Opening the
 menu clears it. Wide: the bubble stays until the next section, a hover line, the menu, or the visitor's close
-button. Compact: auto-hides after 5 s. The bubble element has `role="status"` and `aria-live="polite"`, plus a close
-button.
+button. Compact: auto-hides after 5 s. Each bubble is tagged `kind: "line" | "hover"`. Screen readers hear a `line` once, whole, from a visually hidden live region (`role="status"`, `aria-live="polite"`); the visible typed text is `aria-hidden`. A `hover` line is shown but not announced. The bubble also has a close button.
 
 ### 4.4 Center stage (`stageRules.ts`, `store.ts`, `useStage.ts`)
 
@@ -165,8 +164,8 @@ button.
 ```
 section becomes active → useStage waits (700 ms − time already active)
    ├─ timer fires and canStage → startStage: staged.add, stage = { sectionId }, clears hover / menu / forcedStage,
-   │                             speaks the line once; robot walks to the centre and plays Talk
-   │      └─ ends after min(4.5 s, line length / 35 cps + 3.5 s) → endStage → robot walks back to the corner
+   │                             speaks the line once (a forced stage always speaks it); robot walks to the centre and plays Talk
+   │      └─ ends after STAGE_MAX_MS (4.5 s) → endStage → robot walks back to the corner
    └─ timer fires and not canStage → skipStage: the line from the corner (once)
 section changes first → timer cleared (a section passed in under 700 ms is neither staged nor spoken, and can still stage later)
 section changes during a stage → setSection sets stage = null at once; the new section is evaluated from scratch
@@ -176,7 +175,7 @@ Other rules:
 - The section that cuts the intro short (the first non-hero section while the intro is `hello` or `leaving`) is added to `staged` and never staged: the robot is mid-walk to its corner.
 - Compact mode or reduced motion switching on mid-stage ends it.
 - `data-guide-stage="<section>"` is on `<html>` while a stage runs (for tests); it is removed on unmount.
-- A chip's forced stage (`forcedStage`) skips rules 4 and 5 for its own section only; `useStage` still waits the 700 ms so the scroll can settle. Sections passed on the way are ignored, an unreachable request expires after 3 s, and a request the rules refuse (rule 2) is dropped. A forced stage of an already-spoken section walks again but does not repeat the line.
+- A chip's forced stage (`forcedStage`) skips rules 4 and 5 for its own section only; `useStage` still waits the 700 ms so the scroll can settle. Sections passed on the way are ignored, an unreachable request expires after 3 s, and a request the rules refuse (rule 2) is dropped. A forced stage (`startStage(id, { forced: true })`) always says the line, even for an already-spoken section: opening the menu cleared the bubble, and a stage that walks to the centre in silence reads as broken. An unforced stage still speaks each line once.
 
 ### 4.5 Hover reactions (`hoverRules.ts`, `useHoverReaction.ts`)
 
@@ -245,7 +244,8 @@ powerPreference: "low-power" }}`, no shadows, two lights, `frameloop="always"` b
 
 - All content is server-rendered HTML; the guide repeats nothing that is not already on the page.
 - Canvas: `aria-hidden="true"`, `pointer-events: none`; `tabIndex={-1}` sits on R3F's wrapper div (keeps it out of the Tab order), not on the canvas element.
-- Bubble: `role="status"`, `aria-live="polite"`, close button with `aria-label="Hide guide message"`. Hover lines are announced the same way.
+- Bubble: split in two so the typewriter does not chatter. A persistent visually hidden live region (`role="status"`, `aria-live="polite"`, `sr-only`) holds the full line, one keyed node per line so a repeat is announced again; the visible typed text (`data-testid="guide-bubble"`) is `aria-hidden="true"`. Hover lines are not announced (they are shown only; keyboard users do not get them, see notes item 5). Close button with `aria-label="Hide guide message"`.
+- A section focused by a chip has `tabindex="-1"`; `[tabindex="-1"]:focus:not(:focus-visible)` removes its outline so a programmatic focus shows no big ring.
 - Hotspot: a real `<button aria-label="Open guide menu">` with `aria-expanded` and `aria-controls="guide-menu"`; transparent, with a visible 2 px focus ring (`:focus-visible`). It is in the DOM only while the robot rests in its corner, so it is not focusable during the intro or a stage. If it had focus when a stage starts, focus falls to `<body>` (accepted: a hidden-but-mounted button would lose it too).
 - Menu: `<nav aria-label="Guide menu">` of plain buttons (no `role="menu"`), always mounted while the hotspot is, `hidden` and `inert` while closed so it is out of the Tab order. Enter / Space activate a chip. Escape closes it and returns focus to the hotspot; closing by the Resume chip or an outside press also puts focus on the hotspot instead of `<body>`. A section chip moves focus to that section (`tabindex="-1"`, `preventScroll`), so keyboard users continue from there. Chip buttons are taller on compact (`py-2.5`).
 - Navbar "Guide" toggle: real `<button aria-pressed>`, persisted in `localStorage` (try/catch), following

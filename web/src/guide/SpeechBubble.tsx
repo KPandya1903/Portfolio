@@ -46,36 +46,44 @@ export function SpeechBubble({ store = guideStore }: { store?: GuideStore }) {
     return () => window.clearTimeout(t);
   }, [storeBubble, mode, store]);
 
-  if (!bubble) return null;
-  return (
-    <div
-      ref={ref}
-      role="status"
-      aria-live="polite"
-      data-testid="guide-bubble"
-      data-state={leaving ? "leaving" : undefined}
-      onClick={finish}
-      style={{ position: "fixed", left: 0, top: 0, zIndex: 45, width, visibility: "hidden" }}
-    >
-      {/* The outer element's transform is rewritten every frame, so the visible box and its animation live on this wrapper. */}
-      <div
-        key={bubble.key}
-        inert={leaving}
-        className={`relative ${BOX} ${reduced ? "" : leaving ? "guide-bubble-out" : "guide-bubble-in"}`}
-      >
-        {text}
-        <button
-          type="button"
-          aria-label="Hide guide message"
-          onClick={(e) => {
-            e.stopPropagation();
-            store.set({ bubble: null });
-          }}
-          className="absolute right-2 top-2 text-text-secondary hover:text-text-primary"
-        >
-          ×
-        </button>
-      </div>
+  // Screen readers hear each line once, whole, from a persistent visually hidden live region (the keyed child is a new node
+  // per line, so a repeated line is announced again). The typed text is aria-hidden; hover lines are shown but not announced.
+  const liveRegion = (
+    <div role="status" aria-live="polite" className="sr-only">
+      {bubble && bubble.kind === "line" ? <span key={bubble.key}>{bubble.text}</span> : null}
     </div>
+  );
+  if (!bubble) return liveRegion;
+  return (
+    <>
+      {liveRegion}
+      <div
+        ref={ref}
+        data-testid="guide-bubble"
+        data-state={leaving ? "leaving" : undefined}
+        onClick={finish}
+        style={{ position: "fixed", left: 0, top: 0, zIndex: 45, width, visibility: "hidden" }}
+      >
+        {/* The outer element's transform is rewritten every frame, so the visible box and its animation live on this wrapper. */}
+        <div
+          key={bubble.key}
+          inert={leaving}
+          className={`relative ${BOX} ${reduced ? "" : leaving ? "guide-bubble-out" : "guide-bubble-in"}`}
+        >
+          <span aria-hidden="true">{text}</span>
+          <button
+            type="button"
+            aria-label="Hide guide message"
+            onClick={(e) => {
+              e.stopPropagation();
+              store.set({ bubble: null });
+            }}
+            className="absolute right-2 top-2 text-text-secondary hover:text-text-primary"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

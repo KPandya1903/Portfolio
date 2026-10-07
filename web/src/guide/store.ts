@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { introReducer, type IntroEvent } from "./introMachine";
 import { GUIDE_STOPS } from "./config";
 import { shouldStage } from "./stageRules";
-import type { GuideState, GuideStop } from "./types";
+import type { BubbleKind, GuideState, GuideStop } from "./types";
 
 export const INITIAL_STATE: GuideState = {
   available: true,
@@ -37,7 +37,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     listeners.forEach((l) => l());
   };
   const dispatchIntro = (event: IntroEvent) => set({ intro: introReducer(state.intro, event) });
-  const say = (text: string) => set({ bubble: { text, key: ++bubbleKey } });
+  const say = (text: string, kind: BubbleKind = "line") => set({ bubble: { text, key: ++bubbleKey, kind } });
   const speakOnce = (stop: GuideStop) => {
     if (!stop.line || spoken.has(stop.id)) return;
     spoken.add(stop.id);
@@ -82,11 +82,16 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     /** How long the current section has been active, for the stage's fast-scroll rule. */
     dwellMs: () => Date.now() - sectionSince,
     canStage,
-    startStage(id: string) {
+    /** `forced` (a chip): the stage says its line even if it was spoken before; otherwise a line is spoken once. */
+    startStage(id: string, opts: { forced?: boolean } = {}) {
       staged.add(id);
       set({ stage: { sectionId: id }, hover: null, menuOpen: false, forcedStage: null });
       const stop = GUIDE_STOPS.find((s) => s.id === id);
-      if (stop) speakOnce(stop);
+      if (!stop) return;
+      if (opts.forced && stop.line) {
+        spoken.add(stop.id);
+        say(stop.line);
+      } else speakOnce(stop);
     },
     /** The stage was not (or will not be) played: say the section's line from the corner instead, once. Waits for the intro and the model so the bubble can show. */
     skipStage(id: string) {

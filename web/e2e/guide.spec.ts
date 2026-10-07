@@ -383,6 +383,7 @@ test("a chip stages a section again, even one already staged", async ({ page }) 
   await hotspot(page).click();
   await menu(page).getByRole("button", { name: "Skills" }).click();
   await expect.poll(async () => (await readStages(page)).filter((x) => x === "skills").length, { timeout: 15_000 }).toBe(2);
+  await expect(bubble(page)).toContainText("toolbox", { timeout: 5000 }); // the forced stage says the Skills line again
   await noStage(page);
 });
 

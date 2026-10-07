@@ -32,5 +32,6 @@ describe("introReducer", () => {
   });
   it("never leaves done", () => {
     expect(run(["MODEL_READY", "HELLO_DONE"], "done")).toBe("done");
+    expect(run(["MODEL_READY"], "done")).toBe("done"); // a repeated MODEL_READY (re-enabling the guide) is ignored
   });
 });

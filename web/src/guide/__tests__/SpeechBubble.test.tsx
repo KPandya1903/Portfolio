@@ -16,7 +16,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const bubble = () => screen.queryByRole("status");
+const bubble = () => screen.queryByTestId("guide-bubble");
+/** The visually hidden live region screen readers hear (the visible typed text is aria-hidden). */
+const live = () => screen.getByRole("status");
 /** Say a line, then let one animation frame place the bubble (it stays hidden until placed). */
 const say = (text: string) => {
   act(() => store.say(text));
@@ -27,13 +29,43 @@ describe("SpeechBubble", () => {
   it("renders nothing until the guide says something", () => {
     render(<SpeechBubble store={store} />);
     expect(bubble()).toBeNull();
+    expect(live().textContent).toBe("");
   });
 
-  it("shows the line as a polite live region", () => {
+  it("announces a line once, whole, from a visually hidden polite live region", () => {
+    store.set({ reducedMotion: false });
     render(<SpeechBubble store={store} />);
     say("My toolbox.");
-    expect(bubble()?.textContent).toContain("My toolbox.");
-    expect(bubble()?.getAttribute("aria-live")).toBe("polite");
+    expect(live().textContent).toBe("My toolbox."); // complete from the start, not typed
+    expect(live().getAttribute("aria-live")).toBe("polite");
+    expect(live().className).toContain("sr-only");
+    expect(bubble()?.contains(live())).toBe(false);
+  });
+
+  it("hides the visible typed text from assistive tech", () => {
+    render(<SpeechBubble store={store} />);
+    say("My toolbox.");
+    const typed = screen.getByText("My toolbox.", { selector: "[aria-hidden]" });
+    expect(typed.getAttribute("aria-hidden")).toBe("true");
+    expect(bubble()?.getAttribute("aria-live")).toBeNull();
+    expect(bubble()?.getAttribute("role")).toBeNull();
+  });
+
+  it("does not announce a hover line, though it is shown", () => {
+    render(<SpeechBubble store={store} />);
+    act(() => store.say("Hovered.", "hover"));
+    act(() => void vi.advanceTimersByTime(16));
+    expect(bubble()?.textContent).toContain("Hovered.");
+    expect(live().textContent).toBe("");
+  });
+
+  it("announces a repeated identical line again", () => {
+    render(<SpeechBubble store={store} />);
+    say("Same.");
+    const first = live().firstElementChild;
+    say("Same.");
+    expect(live().textContent).toBe("Same.");
+    expect(live().firstElementChild).not.toBe(first);
   });
 
   it("types the line out when motion is allowed, and a click finishes it", () => {
@@ -41,6 +73,7 @@ describe("SpeechBubble", () => {
     render(<SpeechBubble store={store} />);
     say("My toolbox.");
     expect(bubble()?.textContent).not.toContain("My toolbox.");
+    expect(live().textContent).toBe("My toolbox.");
     fireEvent.click(bubble()!);
     expect(bubble()?.textContent).toContain("My toolbox.");
   });
@@ -73,7 +106,6 @@ describe("SpeechBubble placement", () => {
     bubbleAnchor.visible = false;
     render(<SpeechBubble store={store} />);
     say("Hi");
-    expect(bubble()).toBeNull();
     expect(screen.getByTestId("guide-bubble").style.visibility).toBe("hidden");
   });
 });

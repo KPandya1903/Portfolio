@@ -102,7 +102,7 @@ portfolio-3d/
    │     ├─ anchors.ts           pure: anchor → screen px → world, yaw, bubble box, restingBox
    │     ├─ clipMachine.ts       pure: which clip to play; reactionActive
    │     ├─ introMachine.ts      pure: intro phase reducer
-   │     ├─ stageRules.ts        pure: shouldStage skip rules, stageDurationMs
+   │     ├─ stageRules.ts        pure: shouldStage skip rules
    │     ├─ hoverRules.ts        pure: nextHover (dwell, cooldown, leave delay), hoverAllowed
    │     ├─ chips.ts             pure: chipAction, menuAllowed
    │     ├─ look.ts              pure lookAngles, pickGaze; createHeadLook (head-bone offset)
@@ -175,9 +175,8 @@ the `projects` stop), and the interaction constants:
 | Constant | Value | Used by |
 |---|---|---|
 | `STAGE_MIN_DWELL_MS` | 700 | a section must stay active this long before it is staged |
-| `STAGE_HOLD_MS` | 3500 | hold after the line is typed |
-| `STAGE_MAX_MS` | 4500 | hard cap on a stage |
-| `TYPE_CPS` | 35 | typewriter speed; also stage duration |
+| `STAGE_MAX_MS` | 4500 | length of every stage |
+| `TYPE_CPS` | 35 | typewriter speed |
 | `POINTER_IDLE_MS` | 2000 | mouse counts as idle after this |
 | `HOVER_DWELL_MS` / `HOVER_COOLDOWN_MS` / `HOVER_LEAVE_MS` | 350 / 6000 / 800 | hover rules |
 | `FORCED_STAGE_TTL_MS` | 3000 | a chip's stage request expires if its section is not reached |
@@ -213,7 +212,7 @@ Rules:
 | Where | What | Cleared by |
 |---|---|---|
 | `useIntroSequence` | `LOAD_TIMEOUT` (4 s) and `HELLO_DONE` (4 s) timeouts | effect cleanup; the hello timer also on phase change |
-| `useStage` | start timeout (remaining dwell up to 700 ms); forced-request expiry (3 s); stage end timeout (`stageDurationMs`) | effect cleanup on every dependency change and on unmount (which also ends the stage and removes `data-guide-stage`) |
+| `useStage` | start timeout (remaining dwell up to 700 ms); forced-request expiry (3 s); stage end timeout (`STAGE_MAX_MS`) | effect cleanup on every dependency change and on unmount (which also ends the stage and removes `data-guide-stage`) |
 | `useHoverReaction` | dwell timeout (350 ms) and leave timeout (800 ms) | next pointer event, `reset` on section / stage / disallowed change, effect cleanup |
 | `SpeechBubble` | rAF loop following `bubbleAnchor`; 5 s compact auto-hide timeout | effect cleanup (`cancelAnimationFrame`, `clearTimeout`) |
 | `useTypewriter` | `setInterval` at 35 chars/s | effect cleanup; also when the line is complete |
@@ -232,18 +231,18 @@ Rules:
 | `anchors.ts` | yes | `resolveAnchor(mode, intro, staging, viewport) → { x, y, heightPx }`; `restingBox(mode) → { left, bottom, size }` (16 px inset; size 140 wide, 120 compact); `pxToWorld`/`worldToPx({x,y}, viewport) → {x,y}`; `yawToward(targetCenterX \| null, avatarX, maxYaw) → rad` (0 inside `YAW_DEADZONE_PX` = 40); `bubbleBox({x, top}, width, viewportW) → { left, top }`; `modeForWidth(w)` |
 | `clipMachine.ts` | yes | `nextClip({ intro, moving, staging, reducedMotion, stopClip, finished: ReadonlySet<ClipName>, reacting? }) → ClipName`; `reactionActive(reacting, { finished, staging, moving }) → boolean` |
 | `introMachine.ts` | yes | `introReducer(phase, event) → phase` for events `MODEL_READY`, `HELLO_DONE`, `ARRIVED`, `LEFT_HERO`, `LOAD_TIMEOUT`, `FAILED`, `ALREADY_SEEN`, `REDUCED_MOTION` |
-| `stageRules.ts` | yes | `shouldStage({ sectionId, staged, dwellMs, reducedMotion, mode, intro, modelReady, stageActive, forced? }) → boolean`; `stageDurationMs(lineLength) → ms` |
+| `stageRules.ts` | yes | `shouldStage({ sectionId, staged, dwellMs, reducedMotion, mode, intro, modelReady, stageActive, forced? }) → boolean` |
 | `hoverRules.ts` | yes | `nextHover(state, event, now) → { state, say?, lookId? }` for events `enter`, `dwell-complete`, `leave`, `leave-complete`, `reset`; `hoverAllowed(ctx) → boolean`; `INITIAL_HOVER` |
 | `chips.ts` | yes | `chipAction(target, { reducedMotion, mode }) → { type: "open", url } \| { type: "scroll", id, behavior, forceStage }`; `menuAllowed(state) → boolean` (available, enabled, intro done, model ready, no stage) |
 | `look.ts` | `lookAngles`, `pickGaze` yes; `createHeadLook` holds private scratch state | `lookAngles(target \| null, head, bodyYaw, maxYaw, maxPitch) → { yaw, pitch }`; `pickGaze({ cursor, cursorActive, hover, target, resting, reducedMotion, mode }) → point \| null` (hover > cursor > section target); `createHeadLook().apply(bone, yaw, pitch)` adds the offset on top of the mixer's pose |
 | `hoverIds.ts` | yes | `projectHoverId(id)`, `experienceHoverId(id)`, `journeyHoverId(id)`, `skillHoverId(category)`: the `data-guide-hover` values |
 | `hoverGaze.ts` | no | `hoverGaze.center: MutableRefObject<{x,y} \| null>`: written by `useHoverReaction`, read by `GuideAvatar` |
-| `store.ts` | no | `getState`, `subscribe`, `set(partial)`, `say(text)`, `dispatchIntro(event)`, `setSection(id)`, `markModelReady()`, `arrive(stop)`, `canStage(id, { forced?, dwellMs? })`, `startStage(id)`, `skipStage(id)`, `endStage()`, `dwellMs()`, `staged`, `toggleMenu()`, `closeMenu()`, `react()`, `requestStage(id)`; `useGuide(selector, store?)` |
+| `store.ts` | no | `getState`, `subscribe`, `set(partial)`, `say(text, kind?)`, `dispatchIntro(event)`, `setSection(id)`, `markModelReady()`, `arrive(stop)`, `canStage(id, { forced?, dwellMs? })`, `startStage(id, { forced? })`, `skipStage(id)`, `endStage()`, `dwellMs()`, `staged`, `toggleMenu()`, `closeMenu()`, `react()`, `requestStage(id)`; `useGuide(selector, store?)` |
 | `environment.ts` | no | `primeGuideState(store?, matches?, webgl?)`, `failGuide(store?)` (intro `FAILED`, `enabled: false`, `available: false`), `readStorage(area, key)`, `writeStorage(area, key, value)`, `hasWebGL()` |
 | `useActiveSection.ts` | no | observes every `SECTION_IDS` element present in the DOM (including `linkedin`, which has no stop of its own; `stopFor` maps it to the previous stop) |
 | `useGuideEnvironment.ts` | no | subscribes to the width and reduced-motion media queries; writes `mode`, `reducedMotion` |
 | `useIntroSequence.ts` | no | intro timers; writes `data-guide-intro` on `<html>` and the session-seen flag |
-| `useStage.ts` | no | `(store?) → void`: starts a stage after the dwell if `canStage`, else `skipStage`; consumes or expires `forcedStage`; ends the stage after `stageDurationMs`, or at once if the mode becomes compact or reduced motion turns on; writes `data-guide-stage` on `<html>` |
+| `useStage.ts` | no | `(store?) → void`: starts a stage after the dwell if `canStage`, else `skipStage`; consumes or expires `forcedStage`; ends the stage after `STAGE_MAX_MS`, or at once if the mode becomes compact or reduced motion turns on; writes `data-guide-stage` on `<html>` |
 | `useHoverReaction.ts` | no | `(store?) → void`: delegated pointer listeners for `[data-guide-hover]` (mouse only), dwell/leave timers, `store.say` and `store.hover`, publishes the item's centre through `hoverGaze` |
 | `usePointer.ts` | no | `() → { pointer: ref<{x, y, lastMove}>, isActive(now) }`: mouse position for the frame loop; touch and pen ignored |
 | `useTargetCenter.ts` | no | `() → { center, track(el), refresh() }`: cached centre (px) of a tracked element |

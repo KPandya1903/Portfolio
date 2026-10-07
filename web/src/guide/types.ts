@@ -1,6 +1,7 @@
 export type ClipName = "Wave" | "Talk" | "Point" | "Idle" | "Travel" | "ThumbsUp";
 export type StopClip = Exclude<ClipName, "Travel" | "Wave">;
 export type Mode = "wide" | "compact";
+export type BubbleKind = "line" | "hover";
 export type IntroPhase = "pending" | "hello" | "leaving" | "done";
 
 export interface GuideStop {
@@ -27,7 +28,8 @@ export interface GuideState {
   section: string | null;
   intro: IntroPhase;
   modelReady: boolean;
-  bubble: { text: string; key: number } | null;
+  /** `line` is announced to screen readers; a `hover` line is shown but not (it would interrupt whatever the user is reading). */
+  bubble: { text: string; key: number; kind: BubbleKind } | null;
   /** Center stage in progress for this section (docs/superpowers/plans/2026-10-06-interactive-guide.md), or null. */
   stage: { sectionId: string } | null;
   /** The marked item the robot is looking at because of a hover (the avatar derives the gaze from it), or null. */

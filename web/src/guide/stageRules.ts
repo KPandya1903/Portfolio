@@ -1,4 +1,4 @@
-import { STAGE_HOLD_MS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS, TYPE_CPS } from "./config";
+import { STAGE_MIN_DWELL_MS } from "./config";
 import type { IntroPhase, Mode } from "./types";
 
 export interface StageInput {
@@ -23,9 +23,4 @@ export function shouldStage({ sectionId, staged, dwellMs, reducedMotion, mode, i
   if (reducedMotion || mode === "compact" || intro !== "done" || !modelReady || stageActive) return false;
   if (forced) return true;
   return !staged.has(sectionId) && dwellMs >= STAGE_MIN_DWELL_MS;
-}
-
-/** How long a stage lasts: the line's typing time plus the hold, never more than the hard cap. */
-export function stageDurationMs(lineLength: number): number {
-  return Math.min(STAGE_MAX_MS, (lineLength / TYPE_CPS) * 1000 + STAGE_HOLD_MS);
 }

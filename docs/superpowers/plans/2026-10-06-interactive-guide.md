@@ -15,7 +15,7 @@
 | Topic | Rule |
 |---|---|
 | Resting spot | Bottom-left corner, 16 px inset, height 140 px (wide and compact; compact keeps 120 px). No rail: `--rail-width` padding removed. |
-| Center stage | When a section becomes active for the FIRST time this page view (excluding `hero`, whose stage is the intro) the robot walks to the viewport centre, scales to ~45% of viewport height (clamp 260–420 px), plays Talk, shows that section's line (typewriter), holds `STAGE_HOLD_MS = 3500` after typing finishes or 4500 ms total max, then walks back to the corner. Scrolling is never blocked. |
+| Center stage | When a section becomes active for the FIRST time this page view (excluding `hero`, whose stage is the intro) the robot walks to the viewport centre, scales to ~45% of viewport height (clamp 260–420 px), plays Talk, shows that section's line (typewriter), stays for a fixed 4500 ms (`STAGE_MAX_MS`), then walks back to the corner. Scrolling is never blocked. |
 | Skip stage | Skip (show the line from the corner, no walk) when: reduced motion; compact (phone) mode; the section was active for less than `STAGE_MIN_DWELL_MS = 700` (fast scroll-through) at the moment the stage would start; a stage is already running; intro not `done`; the guide was turned off. A section staged once is never staged again this page view. |
 | Interrupt | If the active section changes during a stage, end the stage immediately (walk back) and apply the skip rules to the new section. |
 | Cursor follow | While resting (not staging, not in intro), head + eyes-direction look at the cursor (pointer position in viewport px), clamped like the existing head look; when no pointer movement for 2 s, ease back to the section target. Disabled under reduced motion and on coarse pointers. |
@@ -25,7 +25,7 @@
 | Phones (compact) | Corner robot only; no stage; tap opens chips; no cursor-follow; hover reactions off. |
 | Reduced motion | No walking, no stage; corner robot snaps; line shown from the corner; cursor-follow and hover look off. |
 
-New config (in `web/src/guide/config.ts`): `STAGE_HOLD_MS`, `STAGE_MIN_DWELL_MS`, `HOVER_DWELL_MS`, `HOVER_COOLDOWN_MS`, `HOVER_LINES: Record<string,string>` (every line ≤ 120 chars; numbers only from site data, same test as stop lines), `CHIPS: { id; label; target: "resume" | sectionId }[]`.
+New config (in `web/src/guide/config.ts`): `STAGE_MIN_DWELL_MS`, `HOVER_DWELL_MS`, `HOVER_COOLDOWN_MS`, `HOVER_LINES: Record<string,string>` (every line ≤ 120 chars; numbers only from site data, same test as stop lines), `CHIPS: { id; label; target: "resume" | sectionId }[]`.
 
 ## Tasks
 
@@ -41,7 +41,7 @@ Files: `web/src/guide/anchors.ts` (+ tests), `web/src/app/globals.css`, `web/e2e
 Files: new `web/src/guide/stageRules.ts` (+ tests), `store.ts` (stage state + tests), `anchors.ts` (stage anchor, + tests), `clipMachine.ts` (stage → Talk, + tests), `GuideAvatar.tsx`, `useIntroSequence`-style `useStage.ts` hook for the timers (+ tests), `SpeechBubble` (position near centered robot: bubble above head works unchanged), `config.ts`.
 - `shouldStage({sectionId, staged:Set, dwellMs, reducedMotion, mode, intro, stageActive, forced}) → boolean` pure.
 - Store: `stage: { sectionId: string } | null`, `staged` set, actions `startStage(id)`, `endStage()`; section change during a stage ends it.
-- Timers live only in `useStage` (cleared on unmount/phase change). `STAGE_HOLD_MS` etc. from config.
+- Timers live only in `useStage` (cleared on unmount/phase change). `STAGE_MAX_MS` etc. from config.
 - Anchor: while `stage` is non-null the avatar targets the centre anchor (same numbers as the intro's centre anchor).
 - Clip: stage → Talk (unless moving → Travel).
 - The stop's `line` is shown via the bubble at stage start (instead of at arrival from the corner); when skipping the stage the line shows from the corner as today.

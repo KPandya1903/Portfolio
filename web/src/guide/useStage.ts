@@ -1,12 +1,11 @@
 "use client";
 import { useEffect } from "react";
-import { FORCED_STAGE_TTL_MS, STAGE_MIN_DWELL_MS, stopFor } from "./config";
-import { stageDurationMs } from "./stageRules";
+import { FORCED_STAGE_TTL_MS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS } from "./config";
 import { guideStore, useGuide, type GuideStore } from "./store";
 
 /**
  * The only place stage timers live. A section that stays active for STAGE_MIN_DWELL_MS is staged if the
- * rules allow; the stage ends after the line's typing time plus the hold (capped). Timers are cleared
+ * rules allow; the stage ends after STAGE_MAX_MS. Timers are cleared
  * on every dependency change and on unmount, so a section change can never leave a stale stage.
  */
 export function useStage(store: GuideStore = guideStore) {
@@ -29,7 +28,7 @@ export function useStage(store: GuideStore = guideStore) {
     const forced = forcedStage === section;
     if (forcedStage && !forced) return;
     const t = window.setTimeout(() => {
-      if (store.canStage(section, { dwellMs: STAGE_MIN_DWELL_MS, forced })) store.startStage(section);
+      if (store.canStage(section, { dwellMs: STAGE_MIN_DWELL_MS, forced })) store.startStage(section, { forced });
       else store.skipStage(section);
       if (forced) store.set({ forcedStage: null });
     }, Math.max(0, STAGE_MIN_DWELL_MS - store.dwellMs()));
@@ -48,11 +47,11 @@ export function useStage(store: GuideStore = guideStore) {
     if (staging && (mode === "compact" || reducedMotion)) store.endStage();
   }, [store, staging, mode, reducedMotion]);
 
-  // End: typing + hold, capped.
+  // End: a fixed stage length.
   const stageId = stage?.sectionId ?? null;
   useEffect(() => {
     if (!stageId) return;
-    const t = window.setTimeout(() => store.endStage(), stageDurationMs(stopFor(stageId).line?.length ?? 0));
+    const t = window.setTimeout(() => store.endStage(), STAGE_MAX_MS);
     return () => window.clearTimeout(t);
   }, [store, stageId]);
 

@@ -35,7 +35,7 @@ export function useHoverReaction(store: GuideStore = guideStore) {
     const apply = (event: HoverEvent) => {
       const r = nextHover(state.current, event, Date.now());
       state.current = r.state;
-      if (r.say) store.say(r.say);
+      if (r.say) store.say(r.say, "hover");
       if (r.lookId === undefined) return;
       if (r.lookId === null) {
         track(null);

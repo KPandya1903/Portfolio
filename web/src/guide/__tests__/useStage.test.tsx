@@ -31,6 +31,16 @@ describe("useStage", () => {
     expect(store.getState().bubble?.text).toBe(line("experience"));
   });
 
+  it("ends a stage after exactly STAGE_MAX_MS", () => {
+    start();
+    go("experience");
+    tick(STAGE_MIN_DWELL_MS);
+    tick(STAGE_MAX_MS - 1);
+    expect(stage()).toBe("experience");
+    tick(1);
+    expect(stage()).toBeNull();
+  });
+
   it("skips a section scrolled through faster than the dwell", () => {
     start();
     go("experience");
@@ -238,6 +248,18 @@ describe("useStage", () => {
       tick(STAGE_MIN_DWELL_MS);
       expect(stage()).toBe("skills");
       expect(store.getState().forcedStage).toBeNull();
+    });
+
+    it("says the section's line again during a forced stage of an already-spoken section", () => {
+      start();
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS);
+      tick(STAGE_MAX_MS);
+      act(() => store.set({ bubble: null })); // as if the menu was opened
+      act(() => store.requestStage("skills"));
+      tick(0);
+      expect(stage()).toBe("skills");
+      expect(store.getState().bubble?.text).toBe(line("skills"));
     });
 
     it("stages the current section right away, without a new dwell", () => {

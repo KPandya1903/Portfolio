@@ -30,10 +30,12 @@ describe("GuideRoot", () => {
     guideStore.toggleMenu();
     guideStore.react();
     guideStore.requestStage("skills");
+    guideStore.markModelReady();
     cleanup();
     const s = guideStore.getState();
     expect(s.menuOpen).toBe(false);
     expect(s.reaction).toBeNull();
     expect(s.forcedStage).toBeNull();
+    expect(s.modelReady).toBe(false);
   });
 });

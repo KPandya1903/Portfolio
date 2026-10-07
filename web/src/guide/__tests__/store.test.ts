@@ -71,6 +71,36 @@ describe("guide store", () => {
       expect(store.getState().bubble?.text).toBe(experience.line);
     });
 
+    it("a forced stage of an already-spoken section says its line again, with a new key", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      const first = store.getState().bubble!;
+      store.endStage();
+      store.set({ bubble: null }); // opening the menu clears the bubble
+      store.startStage("experience", { forced: true });
+      expect(store.getState().bubble?.text).toBe(experience.line);
+      expect(store.getState().bubble!.key).toBeGreaterThan(first.key);
+    });
+
+    it("an unforced stage of a spoken section does not repeat its line", () => {
+      const store = ready();
+      store.setSection("experience");
+      store.startStage("experience");
+      store.endStage();
+      store.set({ bubble: null });
+      store.startStage("experience");
+      expect(store.getState().bubble).toBeNull();
+    });
+
+    it("tags a bubble as a line by default and as a hover line when asked", () => {
+      const store = ready();
+      store.say("Hello");
+      expect(store.getState().bubble?.kind).toBe("line");
+      store.say("Hovered", "hover");
+      expect(store.getState().bubble).toMatchObject({ text: "Hovered", kind: "hover" });
+    });
+
     it("ends a stage", () => {
       const store = ready();
       store.startStage("experience");

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GUIDE_STOPS, STAGE_HOLD_MS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS, TYPE_CPS } from "../config";
-import { shouldStage, stageDurationMs, type StageInput } from "../stageRules";
+import { STAGE_MIN_DWELL_MS } from "../config";
+import { shouldStage, type StageInput } from "../stageRules";
 
 const ok: StageInput = {
   sectionId: "experience",
@@ -53,18 +53,5 @@ describe("shouldStage", () => {
     expect(shouldStage({ ...ok, forced: true, intro: "hello" })).toBe(false);
     expect(shouldStage({ ...ok, forced: true, stageActive: true })).toBe(false);
     expect(shouldStage({ ...ok, forced: true, modelReady: false })).toBe(false);
-  });
-});
-
-describe("stageDurationMs", () => {
-  it("is typing time plus the hold for a short line", () => {
-    expect(stageDurationMs(14)).toBeCloseTo((14 / TYPE_CPS) * 1000 + STAGE_HOLD_MS);
-  });
-  it("is capped for a long line", () => {
-    expect(stageDurationMs(200)).toBe(STAGE_MAX_MS);
-  });
-  it("hits the cap for every real line", () => {
-    // STAGE_HOLD_MS only matters for lines shorter than ~35 chars; today every GUIDE_STOPS line is longer, so the cap decides.
-    for (const stop of GUIDE_STOPS) expect(stageDurationMs(stop.line?.length ?? 0), stop.id).toBe(STAGE_MAX_MS);
   });
 });

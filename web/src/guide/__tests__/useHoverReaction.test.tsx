@@ -58,6 +58,7 @@ describe("useHoverReaction", () => {
     tick(1);
     expect(hover()).toEqual({ id: A });
     expect(bubbleText()).toBe(HOVER_LINES[A]);
+    expect(store.getState().bubble?.kind).toBe("hover");
   });
 
   it("measures the hovered element's centre on dwell-complete", () => {

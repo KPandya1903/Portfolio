@@ -37,7 +37,7 @@ export default function GuideRoot() {
       delete document.documentElement.dataset.guideIntro;
       delete document.documentElement.dataset.guideSection;
       // Covers toggle-off and failure: re-enabling must not re-type or re-announce the old line.
-      guideStore.set({ bubble: null, menuOpen: false, reaction: null, forcedStage: null });
+      guideStore.set({ bubble: null, menuOpen: false, reaction: null, forcedStage: null, modelReady: false });
     },
     [],
   );
