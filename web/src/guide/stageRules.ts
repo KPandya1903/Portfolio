@@ -10,15 +10,17 @@ export interface StageInput {
   reducedMotion: boolean;
   mode: Mode;
   intro: IntroPhase;
+  /** The avatar has rendered; before that the bubble is hidden and a spoken line would be lost. */
+  modelReady: boolean;
   stageActive: boolean;
   /** A deliberate request (a chip click): overrides only the already-staged and dwell rules. */
   forced?: boolean;
 }
 
 /** Pure skip rules for the center stage (docs plan, "Skip stage"). The hero's stage is the intro. */
-export function shouldStage({ sectionId, staged, dwellMs, reducedMotion, mode, intro, stageActive, forced = false }: StageInput): boolean {
+export function shouldStage({ sectionId, staged, dwellMs, reducedMotion, mode, intro, modelReady, stageActive, forced = false }: StageInput): boolean {
   if (sectionId === "hero") return false;
-  if (reducedMotion || mode === "compact" || intro !== "done" || stageActive) return false;
+  if (reducedMotion || mode === "compact" || intro !== "done" || !modelReady || stageActive) return false;
   if (forced) return true;
   return !staged.has(sectionId) && dwellMs >= STAGE_MIN_DWELL_MS;
 }

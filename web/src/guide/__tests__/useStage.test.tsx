@@ -11,6 +11,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   delete document.documentElement.dataset.guideStage;
   store = createGuideStore();
+  store.set({ intro: "done", modelReady: true });
 });
 afterEach(() => vi.useRealTimers());
 
@@ -137,5 +138,87 @@ describe("useStage", () => {
     unmount();
     tick(10_000);
     expect(stage()).toBeNull();
+  });
+
+  it("stages on the timer even if Date.now lags the fake timers by a millisecond", () => {
+    start();
+    go("experience");
+    const lagged = Date.now() + STAGE_MIN_DWELL_MS - 1;
+    const spy = vi.spyOn(Date, "now").mockReturnValue(lagged);
+    tick(STAGE_MIN_DWELL_MS);
+    spy.mockRestore();
+    expect(stage()).toBe("experience");
+  });
+
+  it("speaks the line from the corner when compact mode switches on inside the dwell window", () => {
+    start();
+    go("experience");
+    tick(300);
+    act(() => store.set({ mode: "compact" }));
+    tick(STAGE_MIN_DWELL_MS);
+    expect(stage()).toBeNull();
+    expect(store.getState().bubble?.text).toBe(line("experience"));
+  });
+
+  it("speaks the line from the corner when reduced motion switches on inside the dwell window", () => {
+    start();
+    go("experience");
+    tick(300);
+    act(() => store.set({ reducedMotion: true }));
+    tick(STAGE_MIN_DWELL_MS);
+    expect(stage()).toBeNull();
+    expect(store.getState().bubble?.text).toBe(line("experience"));
+  });
+
+  it("waits for the model: no stage and no spoken line until it renders, then stages and speaks", () => {
+    store.set({ modelReady: false });
+    start();
+    go("experience");
+    tick(10_000);
+    expect(stage()).toBeNull();
+    expect(store.getState().bubble).toBeNull();
+    act(() => store.markModelReady());
+    tick(0);
+    expect(stage()).toBe("experience");
+    expect(store.getState().bubble?.text).toBe(line("experience"));
+  });
+
+  it("still speaks a skipped section's line once the model renders", () => {
+    store.set({ modelReady: false, mode: "compact" });
+    start();
+    go("experience");
+    tick(10_000);
+    expect(store.getState().bubble).toBeNull();
+    act(() => store.markModelReady());
+    tick(0);
+    expect(stage()).toBeNull();
+    expect(store.getState().bubble?.text).toBe(line("experience"));
+  });
+
+  it("ends a running stage when compact mode switches on", () => {
+    start();
+    go("experience");
+    tick(STAGE_MIN_DWELL_MS);
+    expect(stage()).toBe("experience");
+    act(() => store.set({ mode: "compact" }));
+    expect(stage()).toBeNull();
+  });
+
+  it("ends a running stage when reduced motion switches on", () => {
+    start();
+    go("experience");
+    tick(STAGE_MIN_DWELL_MS);
+    expect(stage()).toBe("experience");
+    act(() => store.set({ reducedMotion: true }));
+    expect(stage()).toBeNull();
+  });
+
+  it("does not stage the section that cut the intro short (no bounce back to centre), but speaks its line", () => {
+    store.set({ intro: "leaving" });
+    start();
+    go("about");
+    tick(10_000);
+    expect(stage()).toBeNull();
+    expect(store.getState().bubble?.text).toBe(line("about"));
   });
 });

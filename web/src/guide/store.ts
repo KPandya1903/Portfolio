@@ -48,6 +48,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       reducedMotion: state.reducedMotion,
       mode: state.mode,
       intro: state.intro,
+      modelReady: state.modelReady,
       stageActive: state.stage !== null,
       forced: opts.forced,
     });
@@ -65,7 +66,10 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       if (id === state.section) return;
       sectionSince = Date.now();
       // A section change interrupts a running stage (the robot walks back at once).
+      const introCutShort = id !== "hero" && state.intro !== "done";
       set({ section: id, bubble: null, stage: null });
+      // The section that ended the intro is never staged: the robot is mid-walk to its corner and would bounce back to centre.
+      if (introCutShort) staged.add(id);
       if (id !== "hero") dispatchIntro("LEFT_HERO");
     },
     /** Sections staged this page view (a section is never staged twice). */
@@ -76,6 +80,12 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     startStage(id: string) {
       staged.add(id);
       set({ stage: { sectionId: id } });
+      const stop = GUIDE_STOPS.find((s) => s.id === id);
+      if (stop) speakOnce(stop);
+    },
+    /** The stage was not (or will not be) played: say the section's line from the corner instead, once. Waits for the intro and the model so the bubble can show. */
+    skipStage(id: string) {
+      if (state.intro !== "done" || !state.modelReady) return;
       const stop = GUIDE_STOPS.find((s) => s.id === id);
       if (stop) speakOnce(stop);
     },

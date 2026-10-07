@@ -77,7 +77,7 @@ export function stopFor(sectionId: string | null): GuideStop {
   return GUIDE_STOPS[0];
 }
 
-/** Center stage timings (docs/02): hold after the line is typed, ignore sections passed in under the dwell, hard cap. */
+/** Center stage timings (docs/superpowers/plans/2026-10-06-interactive-guide.md): hold after the line is typed, ignore sections passed in under the dwell, hard cap. */
 export const STAGE_HOLD_MS = 3500;
 export const STAGE_MIN_DWELL_MS = 700;
 export const STAGE_MAX_MS = 4500;

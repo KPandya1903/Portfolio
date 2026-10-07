@@ -28,6 +28,6 @@ export interface GuideState {
   intro: IntroPhase;
   modelReady: boolean;
   bubble: { text: string; key: number } | null;
-  /** Center stage in progress for this section (docs/02), or null. */
+  /** Center stage in progress for this section (docs/superpowers/plans/2026-10-06-interactive-guide.md), or null. */
   stage: { sectionId: string } | null;
 }

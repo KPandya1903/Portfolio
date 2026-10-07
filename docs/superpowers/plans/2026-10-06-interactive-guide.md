@@ -40,7 +40,7 @@ Files: `web/src/guide/anchors.ts` (+ tests), `web/src/app/globals.css`, `web/e2e
 ### Task 2: Center stage
 Files: new `web/src/guide/stageRules.ts` (+ tests), `store.ts` (stage state + tests), `anchors.ts` (stage anchor, + tests), `clipMachine.ts` (stage → Talk, + tests), `GuideAvatar.tsx`, `useIntroSequence`-style `useStage.ts` hook for the timers (+ tests), `SpeechBubble` (position near centered robot: bubble above head works unchanged), `config.ts`.
 - `shouldStage({sectionId, staged:Set, dwellMs, reducedMotion, mode, intro, stageActive, forced}) → boolean` pure.
-- Store: `stage: { sectionId: string; startedAt: number } | null`, `staged` set, actions `startStage(id)`, `endStage()`; section change during a stage ends it.
+- Store: `stage: { sectionId: string } | null`, `staged` set, actions `startStage(id)`, `endStage()`; section change during a stage ends it.
 - Timers live only in `useStage` (cleared on unmount/phase change). `STAGE_HOLD_MS` etc. from config.
 - Anchor: while `stage` is non-null the avatar targets the centre anchor (same numbers as the intro's centre anchor).
 - Clip: stage → Talk (unless moving → Travel).

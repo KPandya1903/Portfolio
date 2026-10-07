@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STAGE_HOLD_MS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS, TYPE_CPS } from "../config";
+import { GUIDE_STOPS, STAGE_HOLD_MS, STAGE_MAX_MS, STAGE_MIN_DWELL_MS, TYPE_CPS } from "../config";
 import { shouldStage, stageDurationMs, type StageInput } from "../stageRules";
 
 const ok: StageInput = {
@@ -9,6 +9,7 @@ const ok: StageInput = {
   reducedMotion: false,
   mode: "wide",
   intro: "done",
+  modelReady: true,
   stageActive: false,
   forced: false,
 };
@@ -37,6 +38,10 @@ describe("shouldStage", () => {
   it("skips until the intro is done", () => {
     for (const intro of ["pending", "hello", "leaving"] as const) expect(shouldStage({ ...ok, intro })).toBe(false);
   });
+  it("skips until the model has rendered (a stage would hide the line behind an invisible bubble)", () => {
+    expect(shouldStage({ ...ok, modelReady: false })).toBe(false);
+    expect(shouldStage({ ...ok, modelReady: false, forced: true })).toBe(false);
+  });
   it("skips while a stage is already running", () => {
     expect(shouldStage({ ...ok, stageActive: true })).toBe(false);
   });
@@ -47,6 +52,7 @@ describe("shouldStage", () => {
     expect(shouldStage({ ...ok, forced: true, mode: "compact" })).toBe(false);
     expect(shouldStage({ ...ok, forced: true, intro: "hello" })).toBe(false);
     expect(shouldStage({ ...ok, forced: true, stageActive: true })).toBe(false);
+    expect(shouldStage({ ...ok, forced: true, modelReady: false })).toBe(false);
   });
 });
 
@@ -56,5 +62,9 @@ describe("stageDurationMs", () => {
   });
   it("is capped for a long line", () => {
     expect(stageDurationMs(200)).toBe(STAGE_MAX_MS);
+  });
+  it("hits the cap for every real line", () => {
+    // STAGE_HOLD_MS only matters for lines shorter than ~35 chars; today every GUIDE_STOPS line is longer, so the cap decides.
+    for (const stop of GUIDE_STOPS) expect(stageDurationMs(stop.line?.length ?? 0), stop.id).toBe(STAGE_MAX_MS);
   });
 });

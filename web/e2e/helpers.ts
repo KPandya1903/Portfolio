@@ -39,3 +39,21 @@ export async function recordStages(page: Page) {
 export async function readStages(page: Page): Promise<string[]> {
   return page.evaluate((key) => JSON.parse(sessionStorage.getItem(key) ?? "[]") as string[], STAGES_KEY);
 }
+
+const SECTIONS_KEY = "test:sections";
+
+/** Records every value `<html data-guide-section>` takes, in order: a positive control that the recorders can see changes at all. */
+export async function recordSections(page: Page) {
+  await page.addInitScript((key) => {
+    new MutationObserver(() => {
+      const v = document.documentElement?.dataset.guideSection;
+      if (!v) return;
+      const seen: string[] = JSON.parse(sessionStorage.getItem(key) ?? "[]");
+      if (seen[seen.length - 1] !== v) sessionStorage.setItem(key, JSON.stringify([...seen, v]));
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-guide-section"] });
+  }, SECTIONS_KEY);
+}
+
+export async function readSections(page: Page): Promise<string[]> {
+  return page.evaluate((key) => JSON.parse(sessionStorage.getItem(key) ?? "[]") as string[], SECTIONS_KEY);
+}

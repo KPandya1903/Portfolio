@@ -58,7 +58,7 @@ describe("guide store", () => {
     afterEach(() => vi.useRealTimers());
     const ready = () => {
       const store = createGuideStore();
-      store.set({ intro: "done" });
+      store.set({ intro: "done", modelReady: true });
       return store;
     };
 
@@ -131,6 +131,40 @@ describe("guide store", () => {
       store.setSection("experience");
       store.arrive(experience); // already spoken: stays quiet, no double speak
       expect(store.getState().bubble).toBeNull();
+    });
+
+    it("does not stage before the model has rendered", () => {
+      const store = ready();
+      store.set({ modelReady: false });
+      store.setSection("experience");
+      expect(store.canStage("experience", { dwellMs: Infinity })).toBe(false);
+    });
+
+    it("skipStage speaks the section's line once, only when the intro is done and the model rendered", () => {
+      const store = ready();
+      store.set({ modelReady: false });
+      store.setSection("experience");
+      store.skipStage("experience");
+      expect(store.getState().bubble).toBeNull();
+      store.set({ modelReady: true, intro: "leaving" });
+      store.skipStage("experience");
+      expect(store.getState().bubble).toBeNull();
+      store.set({ intro: "done" });
+      store.skipStage("experience");
+      expect(store.getState().bubble?.text).toBe(experience.line);
+      store.set({ bubble: null });
+      store.skipStage("experience");
+      expect(store.getState().bubble).toBeNull();
+    });
+
+    it("never stages the section that cut the intro short, but still speaks its line from the corner", () => {
+      const store = ready();
+      store.set({ intro: "leaving" });
+      store.setSection("about");
+      expect(store.getState().intro).toBe("done");
+      expect(store.canStage("about", { dwellMs: Infinity })).toBe(false);
+      store.arrive(GUIDE_STOPS.find((s) => s.id === "about")!);
+      expect(store.getState().bubble).not.toBeNull();
     });
 
     it("answers whether a section may stage right now, with a stop required", () => {

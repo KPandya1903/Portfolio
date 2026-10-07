@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { readIntroPhases, readStages, recordIntroPhases, recordStages } from "./helpers";
+import { readIntroPhases, readSections, readStages, recordIntroPhases, recordSections, recordStages } from "./helpers";
 
 // GuideLoader mounts the canvas from requestIdleCallback (timeout 2000 ms) or a 1200 ms setTimeout fallback.
 // Absence checks must wait past that, or they pass before a wrongly-mounting guide could appear.
@@ -134,7 +134,7 @@ test("a failed model load removes the guide", async ({ page }) => {
   needsWebGL();
   await page.route("**/*.glb", (r) => r.abort());
   await recordIntroPhases(page);
-  // Registered before navigation so the failure cannot be missed; the toggle must disappear after it, not before it ever mounted.
+  // Registered before navigation so the failure cannot be missed; the toggle is only checked once the load has failed.
   const modelFailed = page.waitForEvent("requestfailed", { predicate: (r) => r.url().endsWith(".glb"), timeout: 20_000 });
   await page.goto("/");
   await modelFailed;
@@ -147,7 +147,7 @@ test("a failed model load removes the guide", async ({ page }) => {
 });
 
 const STAGE = "data-guide-stage";
-const noStage = (page: Page) => expect(html(page)).not.toHaveAttribute(STAGE, /.+/);
+const noStage = (page: Page) => expect(html(page)).not.toHaveAttribute(STAGE, /.+/, { timeout: 10_000 });
 
 test("center stage plays once for a new section", async ({ page }) => {
   needsWebGL();
@@ -175,11 +175,13 @@ test.describe("no stage", () => {
     test("never stages a section", async ({ page }) => {
       needsWebGL();
       await recordStages(page);
+      await recordSections(page);
       await page.goto("/");
       await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
       await scrollToSection(page, "experience");
-      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 });
+      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 }); // positive control: the line is spoken from the corner
       await page.waitForTimeout(1500);
+      expect(await readSections(page)).toContain("experience"); // the recorders can see changes, so an empty stage list means something
       expect(await readStages(page)).toEqual([]);
       await noStage(page);
     });
@@ -190,11 +192,13 @@ test.describe("no stage", () => {
     test("never stages a section", async ({ page }) => {
       needsWebGL();
       await recordStages(page);
+      await recordSections(page);
       await page.goto("/");
       await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
       await scrollToSection(page, "experience");
-      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 });
+      await expect(bubble(page)).toContainText("Fini", { timeout: 10_000 }); // positive control: the line is spoken from the corner
       await page.waitForTimeout(1500);
+      expect(await readSections(page)).toContain("experience"); // the recorders can see changes, so an empty stage list means something
       expect(await readStages(page)).toEqual([]);
       await noStage(page);
     });
