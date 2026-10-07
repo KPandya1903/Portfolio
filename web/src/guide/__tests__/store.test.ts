@@ -185,4 +185,35 @@ describe("guide store", () => {
       expect(store.canStage("experience")).toBe(false);
     });
   });
+
+  describe("hover", () => {
+    it("starts empty and can be set", () => {
+      const store = createGuideStore();
+      expect(store.getState().hover).toBeNull();
+      store.set({ hover: { id: "project-nexusmesh" } });
+      expect(store.getState().hover).toEqual({ id: "project-nexusmesh" });
+    });
+
+    it("is cleared by a section change", () => {
+      const store = createGuideStore();
+      store.set({ hover: { id: "project-nexusmesh" } });
+      store.setSection("projects");
+      expect(store.getState().hover).toBeNull();
+    });
+
+    it("is cleared when a stage starts", () => {
+      const store = createGuideStore();
+      store.set({ intro: "done", modelReady: true, hover: { id: "project-nexusmesh" } });
+      store.startStage("experience");
+      expect(store.getState().hover).toBeNull();
+    });
+
+    it("lets a hover line repeat (it is not speak-once)", () => {
+      const store = createGuideStore();
+      store.say("same");
+      const first = store.getState().bubble!.key;
+      store.say("same");
+      expect(store.getState().bubble!.key).toBe(first + 1);
+    });
+  });
 });

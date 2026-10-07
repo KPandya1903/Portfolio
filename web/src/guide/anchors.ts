@@ -37,10 +37,14 @@ export const pxToWorld = (p: { x: number; y: number }, v: Viewport) => ({ x: p.x
 
 export const worldToPx = (p: { x: number; y: number }, v: Viewport) => ({ x: p.x + v.w / 2, y: v.h / 2 - p.y });
 
-/** Turn toward the target's side of the avatar; face forward without one (docs/02 §5). */
+/** A target closer than this to the avatar's x leaves the body facing forward (no swing as the target crosses it). */
+export const YAW_DEADZONE_PX = 40;
+
+/** Turn toward the target's side of the avatar; face forward without one or inside the deadzone (docs/02 §5). */
 export function yawToward(targetCenterX: number | null, avatarX: number, maxYaw: number): number {
   if (targetCenterX === null) return 0;
-  return Math.sign(targetCenterX - avatarX) * maxYaw;
+  const dx = targetCenterX - avatarX;
+  return Math.abs(dx) < YAW_DEADZONE_PX ? 0 : Math.sign(dx) * maxYaw;
 }
 
 const BUBBLE_MARGIN = 12;

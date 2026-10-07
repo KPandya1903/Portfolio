@@ -91,7 +91,8 @@ describe("createHeadLook", () => {
 describe("pickGaze", () => {
   const cursor = { x: 900, y: 40 };
   const target = { x: 300, y: 500 };
-  const base = { cursor, cursorActive: true, target, resting: true, reducedMotion: false, mode: "wide" as const };
+  const hover = { x: 700, y: 400 };
+  const base = { cursor, cursorActive: true, hover: null, target, resting: true, reducedMotion: false, mode: "wide" as const };
 
   it("follows the cursor when it is active and the robot is resting on a wide screen", () => {
     expect(pickGaze(base)).toBe(cursor);
@@ -114,5 +115,16 @@ describe("pickGaze", () => {
   });
   it("uses the target when there is no cursor position yet", () => {
     expect(pickGaze({ ...base, cursor: null })).toBe(target);
+  });
+  it("returns null for an active cursor when not resting and there is no target", () => {
+    expect(pickGaze({ ...base, resting: false, target: null })).toBeNull();
+  });
+  it("prefers a hovered item over the cursor and the section target", () => {
+    expect(pickGaze({ ...base, hover })).toBe(hover);
+    expect(pickGaze({ ...base, hover, cursorActive: false })).toBe(hover);
+    expect(pickGaze({ ...base, hover, cursor: null, target: null })).toBe(hover);
+  });
+  it("falls back to the cursor again once the hover ends", () => {
+    expect(pickGaze({ ...base, hover: null })).toBe(cursor);
   });
 });

@@ -84,3 +84,43 @@ export const STAGE_MAX_MS = 4500;
 /** Speech bubble typing speed, characters per second. */
 export const TYPE_CPS = 35;
 export const POINTER_IDLE_MS = 2000;
+
+/** Hover reactions (plan table "Hover reactions"): dwell before the robot reacts, one line per cooldown, grace before it stops looking. */
+export const HOVER_DWELL_MS = 350;
+export const HOVER_COOLDOWN_MS = 6000;
+export const HOVER_LEAVE_MS = 800;
+/** One short first-person line per hover id (project-*, skills-*, exp-*, journey-*). An id with no line is looked at silently. */
+export const HOVER_LINES: Record<string, string> = {
+  "project-edara": "Edara is a private repo, so there's no link. Ask me and I'll walk you through it.",
+  "project-nexusmesh": "A Chord DHT built from primitives: under 5 ms p99 lookups in a 100-node network.",
+  "project-taskpulse": "TaskPulse sustains 10K+ tasks a day at 99.9% reliability.",
+  "project-fleetiq": "FleetIQ reached 98.15% OCR success and produced 591 matched entry-exit pairs.",
+  "project-doclens": "DocLens cut its client bundle from 1.5 MB to 285 KB gzipped, and it's live.",
+  "project-vaultchat": "In VaultChat the server only ever stores ciphertext. No plaintext field exists.",
+  "project-tradeflow": "TradeFlow is a paper trading platform with real-time pricing and forecasting.",
+  "project-i-wizard": "I Wizard won 1st place at QuackHacks '26, built in a 24-hour hackathon.",
+  "project-wizard-duel": "Wizard Duel is a 10-level Unity campaign with state machine AI.",
+  "project-recallai": "RecallAI maps related YouTube videos into a 3D graph, and nothing leaves your machine.",
+  "project-credit-risk": "My credit risk model reaches 0.91 AUC-ROC, with median API responses under 200 ms.",
+  "project-nutrisense": "NutriSense recognizes ingredients at 96.41% test accuracy.",
+  "project-quickfill": "QuickFill has 19+ active users on the Chrome Web Store.",
+  "project-passmanager": "PassManager is a lightweight server for encrypted password storage.",
+  "project-ventureview-hr": "VentureViewHR is an AI HR assistant with Gemini-powered insights.",
+  "skills-languages": "My languages: Python, Java, TypeScript, Go, C/C++, Swift, SQL and Bash.",
+  "skills-distributed-systems-backend": "Backend and distributed systems: Chord DHT, gRPC, Redis, idempotency.",
+  "skills-ai-ml": "ML from PyTorch and YOLOv8 to RAG and LLM tool calling.",
+  "skills-cloud-infrastructure": "Docker, AWS, Cloudflare Workers and GitHub Actions CI/CD.",
+  "skills-mobile-frontend": "SwiftUI and UIKit on mobile, React and Next.js on the web.",
+  "skills-engineering-practice": "Pull-request review, feature flags, tests and profiling.",
+  "exp-fini": "At Fini I build AI features in SwiftUI and migrate UIKit screens behind feature flags.",
+  "exp-stevens-research": "My Stevens research cut federated-learning training energy 35% with under 2% accuracy loss.",
+  "exp-djsce-placement-platform": "I owned that placement backend: 10K+ requests a day at under 200 ms p95.",
+  "exp-djsce-undergrad-research": "That work became a peer-reviewed paper on ingredient recognition and recipes.",
+  "journey-btech": "Where it started: a B.Tech in AI and Machine Learning in Mumbai.",
+  "journey-publication": "My first peer-reviewed paper, in Library Progress International.",
+  "journey-hackhouse-sf": "HackHouse SF: Top 100, and I pitched AirGarage.",
+  "journey-quackhacks": "QuackHacks '26: 1st place with a 3D dueling game.",
+  "journey-stevens": "The MS in Computer Science at Stevens, class of 2027.",
+  "journey-graduation": "MS graduation in May 2027.",
+  "journey-full-time": "From June 2027 I'm open to new-grad software and ML roles.",
+};

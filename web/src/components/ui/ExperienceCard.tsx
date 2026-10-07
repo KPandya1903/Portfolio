@@ -3,6 +3,7 @@ import { Experience } from "@/types";
 import { SkillBadge } from "./SkillBadge";
 import { HiBriefcase, HiLocationMarker } from "react-icons/hi";
 import { cn } from "@/lib/utils";
+import { experienceHoverId } from "@/guide/hoverIds";
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -19,7 +20,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ experience, clas
       <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-accent-primary ring-4 ring-background" />
 
       {/* Content Card */}
-      <div className="bg-surface rounded-xl p-6 border border-accent-cream hover:border-accent-secondary hover:shadow-card-hover transition-all duration-300">
+      <div data-guide-hover={experienceHoverId(experience.id)} className="bg-surface rounded-xl p-6 border border-accent-cream hover:border-accent-secondary hover:shadow-card-hover transition-all duration-300">
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-start justify-between flex-wrap gap-2 mb-2">

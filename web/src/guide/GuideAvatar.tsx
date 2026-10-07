@@ -10,7 +10,8 @@ import { debugInfo } from "./debugInfo";
 import { nextClip } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
 import { flashHighlight } from "./highlight";
-import { createHeadLook, lookAngles, pickGaze } from "./look";
+import { hoverGaze } from "./hoverGaze";
+import { createHeadLook, lookAngles, pickGaze, type GazeInput } from "./look";
 import { guideStore } from "./store";
 import type { ClipName } from "./types";
 import { usePointer } from "./usePointer";
@@ -30,6 +31,7 @@ const target = new THREE.Vector3();
 const targetScale = new THREE.Vector3();
 const yawTarget = new THREE.Euler();
 const headWorld = new THREE.Vector3();
+const gazeInput: GazeInput = { cursor: null, cursorActive: false, hover: null, target: null, resting: false, reducedMotion: false, mode: "wide" };
 
 /** The frame loop from docs/04-system-design.md §2. */
 export function GuideAvatar() {
@@ -137,14 +139,14 @@ export function GuideAvatar() {
     // Raw viewport px for the cursor (no layout reads); the section target comes from the cached centre.
     const resting = s.intro === "done" && !staging;
     const sectionTarget = !inIntro && !staging ? center.current : null;
-    const gaze = pickGaze({
-      cursor: pointer.current,
-      cursorActive: isActive(Date.now()),
-      target: sectionTarget,
-      resting,
-      reducedMotion: s.reducedMotion,
-      mode: s.mode,
-    });
+    gazeInput.cursor = pointer.current;
+    gazeInput.cursorActive = isActive(Date.now());
+    gazeInput.hover = s.hover ? hoverGaze.center.current : null; // measured on dwell and on scroll, never per frame
+    gazeInput.target = sectionTarget;
+    gazeInput.resting = resting;
+    gazeInput.reducedMotion = s.reducedMotion;
+    gazeInput.mode = s.mode;
+    const gaze = pickGaze(gazeInput);
     yawTarget.set(0, yawToward(gaze?.x ?? null, avatarPx.x, MAX_YAW), 0);
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
@@ -195,7 +197,7 @@ export function GuideAvatar() {
       debugInfo.x = avatarPx.x;
       debugInfo.y = avatarPx.y;
       debugInfo.curHeightPx = heightPx;
-      debugInfo.gaze = !gaze ? "none" : gaze === sectionTarget ? "target" : "cursor";
+      debugInfo.gaze = !gaze ? "none" : gaze === gazeInput.hover ? "hover" : gaze === sectionTarget ? "target" : "cursor";
     }
   });
 

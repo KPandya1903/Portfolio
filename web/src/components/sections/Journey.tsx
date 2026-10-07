@@ -17,6 +17,7 @@ import { visibleYearLabels } from "./yearLabels";
 import { timeline, timelineAsOf } from "@/data/timeline";
 import { TimelineCategory, TimelineEntry } from "@/types";
 import { cn } from "@/lib/utils";
+import { journeyHoverId } from "@/guide/hoverIds";
 
 // Geometry: one entry per half wave, crests carry cards above, troughs below.
 const SLOT = 150;
@@ -613,7 +614,7 @@ export const Journey = () => {
 
                   const e = s.entry;
                   return (
-                    <article key={e.id} {...shared} className={cardClass}>
+                    <article key={e.id} data-guide-hover={journeyHoverId(e.id)} {...shared} className={cardClass}>
                       <div className="flex items-center gap-[7px] font-mono text-[10.5px] uppercase leading-tight tracking-[0.06em] text-text-secondary tabular-nums">
                         <span className="h-2 w-2 flex-none rounded-full" style={{ background: color }} aria-hidden="true" />
                         <span>

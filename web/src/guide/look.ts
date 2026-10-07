@@ -50,18 +50,24 @@ export function createHeadLook() {
 
 type Point = { x: number; y: number };
 
-/**
- * Where the head looks: the mouse cursor while it moved recently and the robot is resting (wide screen, motion
- * allowed, no intro or stage), else the section target, else nowhere (straight ahead).
- */
-export function pickGaze(o: {
+/** Mutable on purpose: the frame loop reuses one scratch object instead of allocating per frame. */
+export interface GazeInput {
   cursor: Point | null;
   cursorActive: boolean;
+  /** The hovered item's centre; set only while the robot reacts to a hover. */
+  hover: Point | null;
   target: Point | null;
   resting: boolean;
   reducedMotion: boolean;
   mode: "wide" | "compact";
-}): Point | null {
+}
+
+/**
+ * Where the head looks: a hovered item first, else the mouse cursor while it moved recently and the robot is resting
+ * (wide screen, motion allowed, no intro or stage), else the section target, else nowhere (straight ahead).
+ */
+export function pickGaze(o: GazeInput): Point | null {
+  if (o.hover !== null) return o.hover;
   const followCursor = o.cursor !== null && o.cursorActive && o.resting && !o.reducedMotion && o.mode === "wide";
   return followCursor ? o.cursor : o.target;
 }

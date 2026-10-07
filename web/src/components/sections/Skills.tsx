@@ -1,6 +1,7 @@
 import { ScrollReveal } from "../animations/ScrollReveal";
 import { SkillBadge } from "../ui/SkillBadge";
 import { skills } from "@/data/skills";
+import { skillHoverId } from "@/guide/hoverIds";
 
 export const Skills = () => {
   return (
@@ -16,7 +17,7 @@ export const Skills = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {skills.map((skillCategory, index) => (
             <ScrollReveal key={skillCategory.category} delay={0.1 * (index + 1)}>
-              <div className="bg-surface-light rounded-xl p-6 border border-accent-cream hover:border-accent-secondary hover:shadow-card-hover transition-all duration-300">
+              <div data-guide-hover={skillHoverId(skillCategory.category)} className="bg-surface-light rounded-xl p-6 border border-accent-cream hover:border-accent-secondary hover:shadow-card-hover transition-all duration-300">
                 {/* Category Header */}
                 <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center">
                   <span className="w-2 h-2 rounded-full bg-accent-primary mr-3" />

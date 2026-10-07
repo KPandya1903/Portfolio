@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { HOVER_LINES } from "../src/guide/config";
 import { readIntroPhases, readSections, readStages, recordIntroPhases, recordSections, recordStages } from "./helpers";
 
 // GuideLoader mounts the canvas from requestIdleCallback (timeout 2000 ms) or a 1200 ms setTimeout fallback.
@@ -225,4 +226,63 @@ test("moving the mouse around leaves the guide working", async ({ page }) => {
   await expect(bubble(page)).toContainText("My resume is right here");
   await scrollToSection(page, "skills"); // the guide still reacts to scrolling after all that mouse movement
   await expect(bubble(page)).toContainText("toolbox", { timeout: 15_000 });
+});
+
+const PROJECT_CARD = '[data-guide-hover^="project-"]';
+
+test("hovering a project card makes the robot say its line", async ({ page }) => {
+  needsWebGL();
+  test.setTimeout(90_000); // intro (up to 25 s) + stage + typing, on a software-rendered canvas
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+  await scrollToSection(page, "projects");
+  await expect(html(page)).toHaveAttribute(STAGE, "projects", { timeout: 10_000 });
+  await noStage(page); // hover is off while the robot is on stage
+  const card = page.locator(PROJECT_CARD).first();
+  await expect(card).toBeVisible();
+  await card.hover();
+  // The line is typed out, so wait for the whole thing. The carousel pauses on hover, so the card does not change under us.
+  const id = (await card.getAttribute("data-guide-hover"))!;
+  const line = HOVER_LINES[id];
+  expect(line, `a configured line for ${id}`).toBeTruthy();
+  await expect(bubble(page)).toContainText(line, { timeout: 15_000 });
+  expect(line).not.toContain("Click any card"); // not the section line
+
+  // Scrolling on to the next section brings that section's behaviour back.
+  await scrollToSection(page, "skills");
+  await expect(html(page)).toHaveAttribute("data-guide-section", "skills");
+  await expect(bubble(page)).toContainText("toolbox", { timeout: 15_000 });
+  await expect(bubble(page)).not.toContainText(line);
+});
+
+test.describe("no hover reaction", () => {
+  const noHoverLine = async (page: Page) => {
+    await page.goto("/");
+    await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+    await scrollToSection(page, "projects");
+    await expect(bubble(page)).toContainText("Click any card", { timeout: 15_000 }); // positive control: the section line is spoken
+    const card = page.locator(PROJECT_CARD).first();
+    await expect(card).toBeVisible();
+    await card.hover();
+    await page.waitForTimeout(1500); // well past the dwell and the typing time of a hover line
+    const line = HOVER_LINES[(await card.getAttribute("data-guide-hover"))!];
+    expect(line).toBeTruthy();
+    await expect(bubble(page)).not.toContainText(line);
+  };
+
+  test.describe("phone", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    test("ignores hover (compact)", async ({ page }) => {
+      needsWebGL();
+      await noHoverLine(page);
+    });
+  });
+
+  test.describe("reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+    test("ignores hover", async ({ page }) => {
+      needsWebGL();
+      await noHoverLine(page);
+    });
+  });
 });

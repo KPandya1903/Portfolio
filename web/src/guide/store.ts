@@ -14,6 +14,7 @@ export const INITIAL_STATE: GuideState = {
   modelReady: false,
   bubble: null,
   stage: null,
+  hover: null,
 };
 
 /** One store, discrete writers only; per-frame code reads getState() (docs/03 §6). */
@@ -67,7 +68,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       sectionSince = Date.now();
       // A section change interrupts a running stage (the robot walks back at once).
       const introCutShort = id !== "hero" && (state.intro === "hello" || state.intro === "leaving");
-      set({ section: id, bubble: null, stage: null });
+      set({ section: id, bubble: null, stage: null, hover: null });
       // The section that ended the intro is never staged: the robot is mid-walk to its corner and would bounce back to centre.
       if (introCutShort) staged.add(id);
       if (id !== "hero") dispatchIntro("LEFT_HERO");
@@ -79,7 +80,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
     canStage,
     startStage(id: string) {
       staged.add(id);
-      set({ stage: { sectionId: id } });
+      set({ stage: { sectionId: id }, hover: null });
       const stop = GUIDE_STOPS.find((s) => s.id === id);
       if (stop) speakOnce(stop);
     },

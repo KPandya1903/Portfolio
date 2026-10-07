@@ -6,6 +6,7 @@ import { SkillBadge } from "./SkillBadge";
 import { FaGithub, FaLock } from "react-icons/fa";
 import { HiExternalLink } from "react-icons/hi";
 import { cn } from "@/lib/utils";
+import { projectHoverId } from "@/guide/hoverIds";
 
 interface ProjectCardProps {
   project: Project;
@@ -71,6 +72,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <div
       ref={cardRef}
+      data-guide-hover={projectHoverId(project.id)}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{

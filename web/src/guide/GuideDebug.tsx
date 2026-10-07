@@ -17,6 +17,7 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
   const mode = useGuide((s) => s.mode, store);
   const reducedMotion = useGuide((s) => s.reducedMotion, store);
   const stage = useGuide((s) => s.stage, store);
+  const hover = useGuide((s) => s.hover, store);
   const [info, setInfo] = useState(snapshot);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
     ["section", section ?? "-"],
     ["intro", intro],
     ["stage", stage?.sectionId ?? "-"],
+    ["hover", hover?.id ?? "-"],
     ["mode", mode],
     ["reduced motion", reducedMotion ? "yes" : "no"],
     ["clip", info.clip || "-"],

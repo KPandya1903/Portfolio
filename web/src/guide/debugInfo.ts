@@ -10,6 +10,6 @@ export const debugInfo = {
   x: 0,
   y: 0,
   curHeightPx: 0,
-  /** What the head looks at: the mouse "cursor", the section "target" or "none". */
+  /** What the head looks at: a "hover"ed item, the mouse "cursor", the section "target" or "none". */
   gaze: "none",
 };

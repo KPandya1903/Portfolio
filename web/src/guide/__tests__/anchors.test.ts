@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
+import { YAW_DEADZONE_PX, bubbleBox, modeForWidth, pxToWorld, resolveAnchor, worldToPx, yawToward } from "../anchors";
 const laptop = { w: 1440, h: 900 };
 const phone = { w: 390, h: 844 };
 
@@ -75,13 +75,22 @@ describe("yawToward", () => {
     expect(yawToward(800, 58, 0.6)).toBe(0.6);
   });
   it("turns left toward a target on the left", () => {
-    expect(yawToward(30, 58, 0.6)).toBe(-0.6);
+    expect(yawToward(-30, 58, 0.6)).toBe(-0.6);
   });
   it("faces forward with no target", () => {
     expect(yawToward(null, 58, 0.6)).toBe(0);
   });
   it("faces forward when the target is straight ahead", () => {
     expect(yawToward(58, 58, 0.6)).toBe(0);
+  });
+  it("faces forward inside the deadzone, on either side", () => {
+    expect(YAW_DEADZONE_PX).toBe(40);
+    expect(yawToward(58 + 39, 58, 0.6)).toBe(0);
+    expect(yawToward(58 - 39, 58, 0.6)).toBe(0);
+  });
+  it("turns once the target is the deadzone away", () => {
+    expect(yawToward(58 + 40, 58, 0.6)).toBe(0.6);
+    expect(yawToward(58 - 40, 58, 0.6)).toBe(-0.6);
   });
 });
 

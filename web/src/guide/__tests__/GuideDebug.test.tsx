@@ -37,6 +37,13 @@ describe("GuideDebug", () => {
     expect(panel().textContent).toContain("about");
   });
 
+  it("shows the hovered item", () => {
+    render(<GuideDebug store={store} />);
+    expect(panel().textContent).toContain("hover: -");
+    act(() => store.set({ hover: { id: "project-nexusmesh" } }));
+    expect(panel().textContent).toContain("hover: project-nexusmesh");
+  });
+
   it("shows rounded per-frame values and refreshes them only after the throttle interval", () => {
     Object.assign(debugInfo, { x: 33.4, y: 44.5, curHeightPx: 250.7 });
     render(<GuideDebug store={store} />);
