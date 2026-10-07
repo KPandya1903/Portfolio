@@ -34,6 +34,7 @@ export function GuideDebug({ store = guideStore }: { store?: GuideStore }) {
     ["mode", mode],
     ["reduced motion", reducedMotion ? "yes" : "no"],
     ["clip", info.clip || "-"],
+    ["gaze", info.gaze],
     ["stop", info.stopId || "-"],
     ["target x", Math.round(info.anchorX)],
     ["target y", Math.round(info.anchorY)],

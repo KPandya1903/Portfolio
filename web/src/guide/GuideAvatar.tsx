@@ -10,9 +10,10 @@ import { debugInfo } from "./debugInfo";
 import { nextClip } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
 import { flashHighlight } from "./highlight";
-import { createHeadLook, lookAngles } from "./look";
+import { createHeadLook, lookAngles, pickGaze } from "./look";
 import { guideStore } from "./store";
 import type { ClipName } from "./types";
+import { usePointer } from "./usePointer";
 import { useTargetCenter } from "./useTargetCenter";
 
 const ARRIVE_PX = 4;
@@ -57,6 +58,7 @@ export function GuideAvatar() {
   const lastStop = useRef<string | null>(null);
   const arrivedAt = useRef<string | null>(null);
   const { center, track, refresh } = useTargetCenter();
+  const { pointer, isActive } = usePointer();
   const headBone = useMemo(() => scene.getObjectByName(MODEL.headBone) ?? null, [scene]);
   const headLook = useMemo(() => (headBone ? createHeadLook() : null), [headBone]);
   const headAngles = useRef({ yaw: 0, pitch: 0 });
@@ -132,8 +134,18 @@ export function GuideAvatar() {
     }
 
     const avatarPx = worldToPx(root.current.position, v);
-    const targetX = !inIntro && !staging && center.current ? center.current.x : null;
-    yawTarget.set(0, yawToward(targetX, avatarPx.x, MAX_YAW), 0);
+    // Raw viewport px for the cursor (no layout reads); the section target comes from the cached centre.
+    const resting = s.intro === "done" && !staging;
+    const sectionTarget = !inIntro && !staging ? center.current : null;
+    const gaze = pickGaze({
+      cursor: pointer.current,
+      cursorActive: isActive(Date.now()),
+      target: sectionTarget,
+      resting,
+      reducedMotion: s.reducedMotion,
+      mode: s.mode,
+    });
+    yawTarget.set(0, yawToward(gaze?.x ?? null, avatarPx.x, MAX_YAW), 0);
     if (s.reducedMotion) body.current.rotation.copy(yawTarget);
     else easing.dampE(body.current.rotation, yawTarget, 0.25, dt);
 
@@ -156,7 +168,7 @@ export function GuideAvatar() {
       } else {
         headBone.getWorldPosition(headWorld);
         const want = lookAngles(
-          inIntro || staging ? null : center.current,
+          gaze,
           worldToPx(headWorld, v),
           body.current.rotation.y,
           MAX_HEAD_YAW,
@@ -183,6 +195,7 @@ export function GuideAvatar() {
       debugInfo.x = avatarPx.x;
       debugInfo.y = avatarPx.y;
       debugInfo.curHeightPx = heightPx;
+      debugInfo.gaze = !gaze ? "none" : gaze === sectionTarget ? "target" : "cursor";
     }
   });
 

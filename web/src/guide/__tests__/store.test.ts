@@ -167,6 +167,14 @@ describe("guide store", () => {
       expect(store.getState().bubble).not.toBeNull();
     });
 
+    it("lets a deep-linked section stage later when it was entered before the model loaded", () => {
+      const store = createGuideStore(); // intro is "pending": nothing was cut short
+      store.setSection("projects");
+      expect(store.getState().intro).toBe("done");
+      store.set({ modelReady: true });
+      expect(store.canStage("projects", { dwellMs: Infinity })).toBe(true);
+    });
+
     it("answers whether a section may stage right now, with a stop required", () => {
       const store = ready();
       store.setSection("experience");

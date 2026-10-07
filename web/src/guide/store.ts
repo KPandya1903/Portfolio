@@ -66,7 +66,7 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       if (id === state.section) return;
       sectionSince = Date.now();
       // A section change interrupts a running stage (the robot walks back at once).
-      const introCutShort = id !== "hero" && state.intro !== "done";
+      const introCutShort = id !== "hero" && (state.intro === "hello" || state.intro === "leaving");
       set({ section: id, bubble: null, stage: null });
       // The section that ended the intro is never staged: the robot is mid-walk to its corner and would bounce back to centre.
       if (introCutShort) staged.add(id);

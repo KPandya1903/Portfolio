@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
-import { createHeadLook, LOOK_DEPTH_PX, lookAngles } from "../look";
+import { createHeadLook, LOOK_DEPTH_PX, lookAngles, pickGaze } from "../look";
 
 const head = { x: 100, y: 300 };
 const MAX_YAW = (40 * Math.PI) / 180;
@@ -85,5 +85,34 @@ describe("createHeadLook", () => {
     const b = bone(base.clone());
     createHeadLook().apply(b, 0, 0);
     expect(b.quaternion.angleTo(base)).toBeLessThan(1e-6);
+  });
+});
+
+describe("pickGaze", () => {
+  const cursor = { x: 900, y: 40 };
+  const target = { x: 300, y: 500 };
+  const base = { cursor, cursorActive: true, target, resting: true, reducedMotion: false, mode: "wide" as const };
+
+  it("follows the cursor when it is active and the robot is resting on a wide screen", () => {
+    expect(pickGaze(base)).toBe(cursor);
+  });
+  it("falls back to the section target once the cursor is idle", () => {
+    expect(pickGaze({ ...base, cursorActive: false })).toBe(target);
+  });
+  it("ignores the cursor while the robot is not resting (intro or stage)", () => {
+    expect(pickGaze({ ...base, resting: false })).toBe(target);
+  });
+  it("ignores the cursor with reduced motion", () => {
+    expect(pickGaze({ ...base, reducedMotion: true })).toBe(target);
+  });
+  it("ignores the cursor in compact mode", () => {
+    expect(pickGaze({ ...base, mode: "compact" })).toBe(target);
+  });
+  it("returns null with no usable cursor and no target", () => {
+    expect(pickGaze({ ...base, cursorActive: false, target: null })).toBeNull();
+    expect(pickGaze({ ...base, cursor: null, target: null })).toBeNull();
+  });
+  it("uses the target when there is no cursor position yet", () => {
+    expect(pickGaze({ ...base, cursor: null })).toBe(target);
   });
 });

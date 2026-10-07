@@ -47,3 +47,21 @@ export function createHeadLook() {
     },
   };
 }
+
+type Point = { x: number; y: number };
+
+/**
+ * Where the head looks: the mouse cursor while it moved recently and the robot is resting (wide screen, motion
+ * allowed, no intro or stage), else the section target, else nowhere (straight ahead).
+ */
+export function pickGaze(o: {
+  cursor: Point | null;
+  cursorActive: boolean;
+  target: Point | null;
+  resting: boolean;
+  reducedMotion: boolean;
+  mode: "wide" | "compact";
+}): Point | null {
+  const followCursor = o.cursor !== null && o.cursorActive && o.resting && !o.reducedMotion && o.mode === "wide";
+  return followCursor ? o.cursor : o.target;
+}

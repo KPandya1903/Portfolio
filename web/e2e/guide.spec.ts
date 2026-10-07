@@ -204,3 +204,25 @@ test.describe("no stage", () => {
     });
   });
 });
+
+test("moving the mouse around leaves the guide working", async ({ page }) => {
+  // The head angle is not observable from the DOM in a production build; it is covered by the unit tests of
+  // pickGaze and lookAngles. This only checks that the pointer listener and the cursor gaze break nothing.
+  needsWebGL();
+  test.setTimeout(90_000); // intro (up to 25 s) + stage, on a software-rendered canvas
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await expect(html(page)).toHaveAttribute("data-guide-intro", "done", { timeout: 25_000 });
+  const { width, height } = page.viewportSize()!;
+  for (const [x, y] of [[width - 20, 20], [20, 20], [width / 2, height / 2], [width - 20, height - 20], [20, height - 20]]) {
+    await page.mouse.move(x, y, { steps: 2 });
+    await page.waitForTimeout(150);
+  }
+  expect(errors).toEqual([]);
+  await expect(page.getByTestId("guide-canvas")).toHaveCount(1);
+  await expect(bubble(page)).toBeVisible();
+  await expect(bubble(page)).toContainText("My resume is right here");
+  await scrollToSection(page, "skills"); // the guide still reacts to scrolling after all that mouse movement
+  await expect(bubble(page)).toContainText("toolbox", { timeout: 15_000 });
+});

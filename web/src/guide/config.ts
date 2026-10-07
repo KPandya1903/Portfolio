@@ -83,3 +83,4 @@ export const STAGE_MIN_DWELL_MS = 700;
 export const STAGE_MAX_MS = 4500;
 /** Speech bubble typing speed, characters per second. */
 export const TYPE_CPS = 35;
+export const POINTER_IDLE_MS = 2000;
