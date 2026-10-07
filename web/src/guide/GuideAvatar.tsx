@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { pxToWorld, resolveAnchor, worldToPx, yawToward } from "./anchors";
 import { bubbleAnchor } from "./bubbleAnchor";
 import { debugInfo } from "./debugInfo";
-import { nextClip } from "./clipMachine";
+import { nextClip, reactionActive } from "./clipMachine";
 import { MODEL, stopFor } from "./config";
 import { flashHighlight } from "./highlight";
 import { hoverGaze } from "./hoverGaze";
@@ -161,7 +161,7 @@ export function GuideAvatar() {
         finished.current.delete(s.reaction.clip);
       }
     }
-    if (reacting.current && finished.current.has("Wave")) reacting.current = false;
+    reacting.current = reactionActive(reacting.current, { finished: finished.current, staging, moving });
 
     const clip = nextClip({
       intro: s.intro,

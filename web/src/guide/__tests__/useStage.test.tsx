@@ -273,6 +273,19 @@ describe("useStage", () => {
       expect(store.getState().forcedStage).toBeNull();
     });
 
+    it("does not expire once its section is active: a slow scroll arriving near the TTL still stages", () => {
+      store.startStage("skills"); // already staged once, so only the forced request can stage it again
+      store.endStage();
+      start();
+      go("journey");
+      act(() => store.requestStage("skills"));
+      tick(FORCED_STAGE_TTL_MS - 500);
+      go("skills");
+      tick(STAGE_MIN_DWELL_MS - 100); // the TTL since the request runs out here (effects re-run between ticks)
+      tick(100);
+      expect(stage()).toBe("skills");
+    });
+
     it("expires if the section is never reached", () => {
       start();
       go("journey");

@@ -137,9 +137,73 @@ describe("GuideChips", () => {
     expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto" });
   });
 
-  it("renders nothing while the hotspot is not allowed (intro, stage)", () => {
-    store.set({ intro: "hello" });
+  it.each([
+    ["intro", { intro: "hello" as const }],
+    ["a stage", { stage: { sectionId: "skills" } }],
+    ["the model not ready", { modelReady: false }],
+  ])("renders nothing while the hotspot is not allowed (%s)", (_n, partial) => {
+    store.set(partial);
     setup();
     expect(menu()).toBeNull();
+  });
+
+  it("moves focus to the hotspot when the menu closes with focus inside it (Resume chip)", () => {
+    vi.spyOn(window, "open").mockReturnValue(null);
+    setup();
+    open();
+    screen.getByRole("button", { name: "Resume" }).focus();
+    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open guide menu" }));
+  });
+
+  it("does not steal focus when the menu closes with focus elsewhere", () => {
+    setup();
+    const other = document.createElement("input");
+    document.body.appendChild(other);
+    open();
+    other.focus();
+    act(() => store.closeMenu());
+    expect(document.activeElement).toBe(other);
+  });
+
+  it("a section chip moves focus to the section (tabindex -1 only if absent), not back to the hotspot", () => {
+    const target = document.createElement("section");
+    target.id = "skills";
+    target.scrollIntoView = vi.fn();
+    document.body.appendChild(target);
+    const own = document.createElement("section");
+    own.id = "projects";
+    own.setAttribute("tabindex", "0");
+    own.scrollIntoView = vi.fn();
+    document.body.appendChild(own);
+    setup();
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Skills" }));
+    expect(target.getAttribute("tabindex")).toBe("-1");
+    expect(document.activeElement).toBe(target);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Projects" }));
+    expect(own.getAttribute("tabindex")).toBe("0");
+    expect(document.activeElement).toBe(own);
+  });
+
+  it("Escape closes without moving focus when focus was elsewhere", () => {
+    setup();
+    const other = document.createElement("input");
+    document.body.appendChild(other);
+    open();
+    other.focus();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(store.getState().menuOpen).toBe(false);
+    expect(document.activeElement).toBe(other);
+  });
+
+  it("ignores an Escape another handler already took", () => {
+    setup();
+    open();
+    const ev = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+    ev.preventDefault();
+    document.dispatchEvent(ev);
+    expect(store.getState().menuOpen).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { restingBox } from "./anchors";
 import { chipAction, menuAllowed } from "./chips";
 import { CHIPS } from "./config";
@@ -10,7 +10,7 @@ import { usePresence } from "./usePresence";
 const EXIT_MS = 120;
 const GAP = 8;
 const CHIP =
-  "rounded-full border border-accent-cream bg-surface-light px-3.5 py-1.5 text-sm font-medium text-text-primary shadow-card-lg transition-colors hover:border-accent-secondary";
+  "guide-chip rounded-full border border-accent-cream bg-surface-light px-3.5 text-sm font-medium text-text-primary shadow-card-lg transition-colors hover:border-accent-secondary";
 
 /**
  * The quick-jump menu: plain buttons right of the resting robot (beside the hotspot, below the speech bubble, so
@@ -25,12 +25,22 @@ export function GuideChips({ store = guideStore }: { store?: GuideStore }) {
   const open = allowed && menuOpen;
   const { shown, leaving } = usePresence(open ? true : null, reduced ? 0 : EXIT_MS);
 
+  // Focus must not fall to <body> when the menu closes under it (Resume chip, outside click): hand it to the hotspot.
+  const nav = useRef<HTMLElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open && nav.current?.contains(document.activeElement)) document.getElementById(HOTSPOT_ID)?.focus();
+    wasOpen.current = open;
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const a = document.activeElement;
+      const inside = !!a?.closest?.(`#${MENU_ID}, #${HOTSPOT_ID}`);
       store.closeMenu();
-      document.getElementById(HOTSPOT_ID)?.focus();
+      if (inside) document.getElementById(HOTSPOT_ID)?.focus();
     };
     const onPress = (e: Event) => {
       const t = e.target as Element | null;
@@ -57,11 +67,17 @@ export function GuideChips({ store = guideStore }: { store?: GuideStore }) {
       return;
     }
     if (action.forceStage) store.requestStage(action.id);
-    document.getElementById(action.id)?.scrollIntoView({ behavior: action.behavior });
+    const section = document.getElementById(action.id);
+    if (!section) return;
+    section.scrollIntoView({ behavior: action.behavior });
+    // Keyboard users continue from the section, not from a menu that just closed.
+    if (!section.hasAttribute("tabindex")) section.setAttribute("tabindex", "-1");
+    section.focus({ preventScroll: true });
   };
 
   return (
     <nav
+      ref={nav}
       id={MENU_ID}
       aria-label="Guide menu"
       hidden={!shown}
@@ -70,7 +86,7 @@ export function GuideChips({ store = guideStore }: { store?: GuideStore }) {
       style={{ position: "fixed", left: x, bottom, maxWidth: `calc(100vw - ${x + 16}px)`, zIndex: 46 }}
     >
       {CHIPS.map((c) => (
-        <button key={c.id} type="button" className={CHIP} onClick={() => choose(c.target)}>
+        <button key={c.id} type="button" className={`${CHIP} ${mode === "compact" ? "py-2.5" : "py-1.5"}`} onClick={() => choose(c.target)}>
           {c.label}
         </button>
       ))}

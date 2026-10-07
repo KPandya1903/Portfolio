@@ -24,4 +24,16 @@ describe("GuideRoot", () => {
     cleanup();
     expect(guideStore.getState().bubble).toBeNull();
   });
+
+  it("also drops the menu, a pending reaction and a forced stage on unmount", () => {
+    render(<GuideRoot />);
+    guideStore.toggleMenu();
+    guideStore.react();
+    guideStore.requestStage("skills");
+    cleanup();
+    const s = guideStore.getState();
+    expect(s.menuOpen).toBe(false);
+    expect(s.reaction).toBeNull();
+    expect(s.forcedStage).toBeNull();
+  });
 });

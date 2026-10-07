@@ -13,7 +13,7 @@ export interface StageInput {
   /** The avatar has rendered; before that the bubble is hidden and a spoken line would be lost. */
   modelReady: boolean;
   stageActive: boolean;
-  /** A deliberate request (a chip click): overrides only the already-staged and dwell rules. */
+  /** A deliberate request (a chip click): overrides only the already-staged and dwell rules (useStage still waits the dwell for a just-arrived section). */
   forced?: boolean;
 }
 

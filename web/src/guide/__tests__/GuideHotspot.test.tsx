@@ -63,6 +63,7 @@ describe("GuideHotspot", () => {
     ["intro hello", { intro: "hello" as const }],
     ["intro leaving", { intro: "leaving" as const }],
     ["a stage running", { stage: { sectionId: "skills" } }],
+    ["the model not ready", { modelReady: false }],
     ["guide off", { enabled: false }],
     ["guide unavailable", { available: false }],
   ])("is not rendered during %s", (_name, partial) => {
@@ -76,5 +77,13 @@ describe("GuideHotspot", () => {
     expect(button()).not.toBeNull();
     act(() => store.set({ stage: { sectionId: "skills" } }));
     expect(button()).toBeNull();
+  });
+
+  it("unmounting while focused (a stage starts) leaves focus on the body, deliberately", () => {
+    render(<GuideHotspot store={store} />);
+    button()!.focus();
+    expect(document.activeElement).toBe(button());
+    act(() => store.set({ stage: { sectionId: "skills" } }));
+    expect(document.activeElement).toBe(document.body);
   });
 });

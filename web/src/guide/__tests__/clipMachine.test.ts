@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextClip, type ClipInput } from "../clipMachine";
+import { nextClip, reactionActive, type ClipInput } from "../clipMachine";
 import type { ClipName } from "../types";
 
 const base: ClipInput = { intro: "done", moving: false, reducedMotion: false, staging: false, stopClip: "Point", finished: new Set() };
@@ -49,5 +49,20 @@ describe("nextClip", () => {
     expect(nextClip({ ...base, reacting: true, moving: true })).toBe("Travel");
     expect(nextClip({ ...base, reacting: true, staging: true })).toBe("Talk");
     expect(nextClip({ ...base, reacting: true, reducedMotion: true })).toBe("Idle");
+  });
+});
+
+describe("reactionActive", () => {
+  const facts = { finished: new Set<ClipName>(), staging: false, moving: false };
+  it("stays active until Wave finishes", () => {
+    expect(reactionActive(true, facts)).toBe(true);
+    expect(reactionActive(true, { ...facts, finished: new Set<ClipName>(["Wave"]) })).toBe(false);
+  });
+  it("is dropped when a stage or a walk interrupts it, so it cannot replay later", () => {
+    expect(reactionActive(true, { ...facts, staging: true })).toBe(false);
+    expect(reactionActive(true, { ...facts, moving: true })).toBe(false);
+  });
+  it("never starts by itself", () => {
+    expect(reactionActive(false, facts)).toBe(false);
   });
 });

@@ -8,7 +8,8 @@ export const MENU_ID = "guide-menu";
 
 /**
  * A transparent button over the resting robot (the canvas is click-through). Clicking it waves and toggles the
- * quick-jump menu. It exists only while the robot is in its corner: not during the intro or a center stage.
+ * quick-jump menu. It exists only while the robot is in its corner: not during the intro or a center stage. If it
+ * had focus when a stage starts it unmounts and focus falls to <body>, deliberately: a hidden-but-mounted button would lose it too.
  */
 export function GuideHotspot({ store = guideStore }: { store?: GuideStore }) {
   const allowed = useGuide(menuAllowed, store);

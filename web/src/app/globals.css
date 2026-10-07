@@ -96,6 +96,10 @@ html[data-guide-intro="hello"] #hero > * {
   outline: 2px solid var(--color-accent-primary);
   outline-offset: -4px;
 }
+.guide-chip:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .guide-bubble-in,

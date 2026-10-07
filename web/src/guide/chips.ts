@@ -14,5 +14,5 @@ export function chipAction(target: string, { reducedMotion, mode }: { reducedMot
   return { type: "scroll", id: target, behavior: reducedMotion ? "auto" : "smooth", forceStage: !reducedMotion && mode === "wide" };
 }
 
-/** The robot is at rest in its corner and the guide is on: only then is there anything to click (hotspot and menu). */
-export const menuAllowed = (s: GuideState): boolean => s.available && s.enabled && s.intro === "done" && s.stage === null;
+/** The robot is rendered and at rest in its corner and the guide is on: only then is there anything to click (hotspot and menu). */
+export const menuAllowed = (s: GuideState): boolean => s.available && s.enabled && s.intro === "done" && s.modelReady && s.stage === null;

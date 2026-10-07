@@ -21,13 +21,13 @@ export function useStage(store: GuideStore = guideStore) {
 
   // Start: wait out the dwell, then let the rules decide. The firing timer is itself the proof of dwell (Date.now can lag
   // it), and a section that does not stage says its line from the corner so the line is never lost.
-  // A chip's request (forcedStage) overrides the already-staged and dwell rules for its own section only; sections
+  // A chip's request (forcedStage) overrides the already-staged rule for its own section only (a just-arrived section still
+  // waits out the dwell, so the scroll can settle); sections
   // passed on the way there are left alone, and a request the rules refuse (reduced motion, compact) is dropped.
   useEffect(() => {
     if (!section) return;
     const forced = forcedStage === section;
     if (forcedStage && !forced) return;
-    if (forced && staging) return; // consumed when the running stage ends
     const t = window.setTimeout(() => {
       if (store.canStage(section, { dwellMs: STAGE_MIN_DWELL_MS, forced })) store.startStage(section);
       else store.skipStage(section);
@@ -36,12 +36,12 @@ export function useStage(store: GuideStore = guideStore) {
     return () => window.clearTimeout(t);
   }, [store, section, intro, mode, reducedMotion, modelReady, staging, forcedStage]);
 
-  // A request that is never reached (the user scrolled elsewhere) expires.
+  // A request that is never reached (the user scrolled elsewhere) expires; once its section is active the start effect owns it.
   useEffect(() => {
-    if (!forcedStage) return;
+    if (!forcedStage || section === forcedStage) return;
     const t = window.setTimeout(() => store.set({ forcedStage: null }), FORCED_STAGE_TTL_MS);
     return () => window.clearTimeout(t);
-  }, [store, forcedStage]);
+  }, [store, forcedStage, section]);
 
   // Compact mode or reduced motion switching on mid-stage ends it (the robot walks back).
   useEffect(() => {

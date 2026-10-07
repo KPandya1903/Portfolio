@@ -229,6 +229,16 @@ describe("guide store", () => {
       expect(store.getState().menuOpen).toBe(false);
     });
 
+    it("clears the speech bubble when the menu opens (they would overlap on a phone), not when it closes", () => {
+      const store = createGuideStore();
+      store.say("hello");
+      store.toggleMenu();
+      expect(store.getState().bubble).toBeNull();
+      store.say("again");
+      store.toggleMenu();
+      expect(store.getState().bubble?.text).toBe("again");
+    });
+
     it("closes the menu when the active section changes, and when a stage starts", () => {
       const store = createGuideStore();
       store.toggleMenu();

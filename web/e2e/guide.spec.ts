@@ -324,6 +324,7 @@ test("Escape closes the menu and returns focus to the robot", async ({ page }) =
   await waitForRest(page);
   await hotspot(page).click();
   await expect(menu(page)).toBeVisible();
+  await hotspot(page).focus(); // Safari does not focus a clicked button; Escape only returns focus to a menu the user was in
   await page.keyboard.press("Escape");
   await expect(menu(page)).toBeHidden();
   await expect(hotspot(page)).toBeFocused();
@@ -355,20 +356,34 @@ test("the Resume chip opens the PDF in a new tab", async ({ page, context }) => 
 test("the menu works from the keyboard", async ({ page, browserName }) => {
   needsWebGL();
   await waitForRest(page);
-  if (browserName === "webkit") await hotspot(page).focus(); // Safari's Tab skips buttons unless the user opts in
-  else {
-    // The hotspot is the last focusable thing in the page, so Shift+Tab from the top wraps straight to it.
-    await page.keyboard.press("Shift+Tab");
-  }
+  // Safari's Tab skips buttons unless Option is held; Playwright's documented way to tab through them is Alt+Tab.
+  const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
+  // The hotspot is the last focusable thing in the page, so Shift+Tab from the top wraps straight to it.
+  await page.keyboard.press(`Shift+${tab}`);
   await expect(hotspot(page)).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(menu(page)).toBeVisible();
-  if (browserName !== "webkit") {
-    await page.keyboard.press("Tab");
-    await expect(menu(page).getByRole("button", { name: "Resume" })).toBeFocused();
-  }
+  await page.keyboard.press(tab);
+  await expect(menu(page).getByRole("button", { name: "Resume" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(hotspot(page)).toBeFocused();
+});
+
+test("a chip stages a section again, even one already staged", async ({ page }) => {
+  needsWebGL();
+  test.setTimeout(120_000);
+  await recordStages(page);
+  await waitForRest(page);
+  await scrollToSection(page, "skills");
+  await expect(html(page)).toHaveAttribute(STAGE, "skills", { timeout: 10_000 });
+  await noStage(page);
+  await scrollToSection(page, "experience"); // a different stage in between: the recorder only de-duplicates neighbours
+  await expect(html(page)).toHaveAttribute(STAGE, "experience", { timeout: 10_000 });
+  await noStage(page);
+  await hotspot(page).click();
+  await menu(page).getByRole("button", { name: "Skills" }).click();
+  await expect.poll(async () => (await readStages(page)).filter((x) => x === "skills").length, { timeout: 15_000 }).toBe(2);
+  await noStage(page);
 });
 
 test.describe("phone menu", () => {
@@ -379,6 +394,7 @@ test.describe("phone menu", () => {
     await waitForRest(page);
     await hotspot(page).click();
     await expect(menu(page)).toBeVisible();
+    await expect(bubble(page)).toHaveCount(0, { timeout: 5000 }); // opening the menu clears the line, so they never overlap
     const box = (await menu(page).boundingBox())!;
     const hot = (await hotspot(page).boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(hot.x + hot.width); // beside the robot, never over it

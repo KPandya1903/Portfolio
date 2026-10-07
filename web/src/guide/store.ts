@@ -95,7 +95,8 @@ export function createGuideStore(initial: GuideState = INITIAL_STATE) {
       if (stop) speakOnce(stop);
     },
     toggleMenu() {
-      set({ menuOpen: !state.menuOpen });
+      // Opening clears the bubble: on a phone the two would overlap.
+      set(state.menuOpen ? { menuOpen: false } : { menuOpen: true, bubble: null });
     },
     closeMenu() {
       set({ menuOpen: false });

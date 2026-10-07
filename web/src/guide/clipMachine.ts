@@ -23,3 +23,8 @@ export function nextClip({ intro, moving, staging, reducedMotion, stopClip, fini
   if (RETURN_TO_IDLE.has(stopClip) && finished.has(stopClip)) return "Idle";
   return stopClip;
 }
+
+/** Whether a click reaction is still pending: it ends when Wave finishes, or is interrupted by a stage or a walk (no replay later). */
+export function reactionActive(reacting: boolean, { finished, staging, moving }: { finished: ReadonlySet<ClipName>; staging: boolean; moving: boolean }): boolean {
+  return reacting && !finished.has("Wave") && !staging && !moving;
+}
