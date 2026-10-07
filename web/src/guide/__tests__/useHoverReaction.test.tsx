@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { HOVER_COOLDOWN_MS, HOVER_DWELL_MS, HOVER_LEAVE_MS, HOVER_LINES } from "../config";
+import { GUIDE_STOPS, HOVER_COOLDOWN_MS, HOVER_DWELL_MS, HOVER_LEAVE_MS, HOVER_LINES, STAGE_MIN_DWELL_MS } from "../config";
 import { hoverGaze } from "../hoverGaze";
 import { createGuideStore, type GuideStore } from "../store";
 import { useHoverReaction } from "../useHoverReaction";
+import { useStage } from "../useStage";
 
 const A = "project-nexusmesh";
 const B = "project-taskpulse";
@@ -32,7 +33,9 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(100_000);
   store = createGuideStore();
-  store.set({ intro: "done", modelReady: true, section: "projects" });
+  // No section (nothing about to stage) and a section that has been active for a while, so only the rule under test applies.
+  store.set({ intro: "done", modelReady: true });
+  vi.advanceTimersByTime(1000);
 });
 afterEach(() => {
   cleanup();
@@ -227,6 +230,47 @@ describe("useHoverReaction", () => {
     tick(HOVER_DWELL_MS);
     act(() => store.startStage("experience"));
     expect(hover()).toBeNull();
+    expect(hoverGaze.center.current).toBeNull();
+  });
+
+  it.each([
+    ["compact mode", { mode: "compact" as const }],
+    ["reduced motion", { reducedMotion: true }],
+  ])("drops the look when %s switches on mid-hover", (_n, patch) => {
+    start();
+    const { el } = card(A);
+    fire("pointerover", el);
+    tick(HOVER_DWELL_MS);
+    expect(hover()).toEqual({ id: A });
+    act(() => store.set(patch));
+    expect(hover()).toBeNull();
+    expect(hoverGaze.center.current).toBeNull();
+  });
+
+  it("refuses hover while the section is about to stage, and the stage line is what gets said", () => {
+    renderHook(() => (useStage(store), useHoverReaction(store)));
+    const { el } = card(A);
+    act(() => store.setSection("experience"));
+    fire("pointerover", el);
+    tick(HOVER_DWELL_MS + 100); // the dwell completes before the stage starts
+    expect(hover()).toBeNull();
+    expect(bubbleText()).toBeNull();
+    tick(STAGE_MIN_DWELL_MS);
+    expect(store.getState().stage?.sectionId).toBe("experience");
+    expect(bubbleText()).toBe(GUIDE_STOPS.find((s) => s.id === "experience")!.line);
+    expect(hover()).toBeNull();
+  });
+
+  it("does not let a hover line replace the corner line of a section that will not stage", () => {
+    (store.staged as Set<string>).add("about"); // already staged this page view: its line comes from the corner instead
+    renderHook(() => (useStage(store), useHoverReaction(store)));
+    const { el } = card(A);
+    act(() => store.setSection("about"));
+    fire("pointerover", el);
+    tick(HOVER_DWELL_MS + 100);
+    expect(bubbleText()).toBeNull();
+    tick(STAGE_MIN_DWELL_MS);
+    expect(bubbleText()).toBe(GUIDE_STOPS.find((s) => s.id === "about")!.line);
   });
 
   it("clears timers, listeners and the hover on unmount", () => {

@@ -11,6 +11,8 @@ export interface HoverState {
 export interface HoverContext {
   intro: string;
   staging: boolean;
+  /** The section is about to stage (or still settling); its line comes first. */
+  stagePending: boolean;
   mode: string;
   reducedMotion: boolean;
 }
@@ -33,8 +35,8 @@ export interface HoverResult {
 
 export const INITIAL_HOVER: HoverState = { hoverId: null, lookId: null, lastSayAt: null };
 
-/** Hover reactions need the intro done, no stage, a wide screen and motion allowed. */
-export const hoverAllowed = (c: HoverContext) => c.intro === "done" && !c.staging && c.mode === "wide" && !c.reducedMotion;
+/** Hover reactions need the intro done, no stage running or about to start, a wide screen and motion allowed. */
+export const hoverAllowed = (c: HoverContext) => c.intro === "done" && !c.staging && !c.stagePending && c.mode === "wide" && !c.reducedMotion;
 
 const stopLooking = (state: HoverState): HoverResult => ({
   state: { ...state, hoverId: null, lookId: null },

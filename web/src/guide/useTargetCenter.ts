@@ -43,10 +43,11 @@ export function useTargetCenter(): TargetCenter {
         if (el.current) measure();
       });
     };
-    window.addEventListener("scroll", schedule, { passive: true });
+    // Capture: scroll does not bubble, so this is how an inner scroller (the Journey strip) re-measures too.
+    window.addEventListener("scroll", schedule, { passive: true, capture: true });
     window.addEventListener("resize", schedule);
     return () => {
-      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("scroll", schedule, { capture: true });
       window.removeEventListener("resize", schedule);
       if (raf) cancelAnimationFrame(raf);
     };

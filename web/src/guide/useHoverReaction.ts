@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { HOVER_DWELL_MS, HOVER_LEAVE_MS } from "./config";
+import { HOVER_DWELL_MS, HOVER_LEAVE_MS, STAGE_MIN_DWELL_MS } from "./config";
 import { hoverGaze } from "./hoverGaze";
 import { hoverAllowed, INITIAL_HOVER, nextHover, type HoverEvent, type HoverState } from "./hoverRules";
 import { guideStore, useGuide, type GuideStore } from "./store";
@@ -17,7 +17,7 @@ export function useHoverReaction(store: GuideStore = guideStore) {
   const { center, track } = useTargetCenter();
   const section = useGuide((s) => s.section, store);
   const staging = useGuide((s) => s.stage !== null, store);
-  const allowed = useGuide((s) => hoverAllowed({ intro: s.intro, staging: s.stage !== null, mode: s.mode, reducedMotion: s.reducedMotion }), store);
+  const allowed = useGuide((s) => hoverAllowed({ intro: s.intro, staging: s.stage !== null, stagePending: false, mode: s.mode, reducedMotion: s.reducedMotion }), store);
 
   const state = useRef<HoverState>(INITIAL_HOVER);
   const el = useRef<HTMLElement | null>(null);
@@ -47,7 +47,9 @@ export function useHoverReaction(store: GuideStore = guideStore) {
     };
     const ctx = () => {
       const s = store.getState();
-      return { intro: s.intro, staging: s.stage !== null, mode: s.mode, reducedMotion: s.reducedMotion };
+      // The section's own line (stage, or the corner line a section that does not stage says) comes first: no hover while it is pending.
+      const stagePending = (s.section !== null && store.canStage(s.section, { dwellMs: Infinity })) || store.dwellMs() < STAGE_MIN_DWELL_MS;
+      return { intro: s.intro, staging: s.stage !== null, stagePending, mode: s.mode, reducedMotion: s.reducedMotion };
     };
     const reset = () => {
       clearTimers();
@@ -76,6 +78,7 @@ export function useHoverReaction(store: GuideStore = guideStore) {
       if (!target || !id || state.current.hoverId !== id) return;
       if (e.relatedTarget instanceof Node && target.contains(e.relatedTarget)) return;
       window.clearTimeout(dwellTimer.current);
+      dwellTimer.current = 0;
       apply({ type: "leave", id });
       leaveTimer.current = window.setTimeout(() => {
         leaveTimer.current = 0;

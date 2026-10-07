@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HOVER_COOLDOWN_MS, HOVER_LINES } from "../config";
 import { hoverAllowed, INITIAL_HOVER, nextHover, type HoverContext, type HoverEvent, type HoverState } from "../hoverRules";
 
-const ok: HoverContext = { intro: "done", staging: false, mode: "wide", reducedMotion: false };
+const ok: HoverContext = { intro: "done", staging: false, stagePending: false, mode: "wide", reducedMotion: false };
 const A = "project-nexusmesh";
 const B = "project-taskpulse";
 const NO_LINE = "journey-acm";
@@ -19,6 +19,7 @@ describe("hoverAllowed", () => {
     ["the intro has not finished", { ...ok, intro: "hello" }],
     ["the intro is pending", { ...ok, intro: "pending" }],
     ["a stage is running", { ...ok, staging: true }],
+    ["a stage is about to start", { ...ok, stagePending: true }],
     ["compact mode", { ...ok, mode: "compact" }],
     ["reduced motion", { ...ok, reducedMotion: true }],
   ])("refuses while %s", (_n, ctx) => {
@@ -41,7 +42,7 @@ describe("nextHover", () => {
   });
 
   it("ignores enter when hover is not allowed", () => {
-    for (const ctx of [{ ...ok, intro: "hello" }, { ...ok, staging: true }, { ...ok, mode: "compact" }, { ...ok, reducedMotion: true }]) {
+    for (const ctx of [{ ...ok, intro: "hello" }, { ...ok, staging: true }, { ...ok, stagePending: true }, { ...ok, mode: "compact" }, { ...ok, reducedMotion: true }]) {
       const r = run(INITIAL_HOVER, { type: "enter", id: A, ctx });
       expect(r.state).toEqual(INITIAL_HOVER);
     }

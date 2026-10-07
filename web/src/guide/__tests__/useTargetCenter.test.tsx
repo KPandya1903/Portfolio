@@ -35,6 +35,20 @@ describe("useTargetCenter", () => {
     expect(result.current.center.current).toBeNull();
   });
 
+  it("re-measures when an inner element scrolls (scroll does not bubble, so the listener captures)", () => {
+    const { result } = renderHook(() => useTargetCenter());
+    const rect = { left: 0, top: 0, width: 10, height: 10 };
+    const { el, getBoundingClientRect } = fakeEl(rect);
+    act(() => result.current.track(el));
+    rect.left = 50;
+    const strip = document.createElement("div");
+    document.body.appendChild(strip);
+    act(() => void strip.dispatchEvent(new Event("scroll"))); // non-bubbling, like a real element scroll
+    frame();
+    expect(getBoundingClientRect).toHaveBeenCalledTimes(2);
+    expect(result.current.center.current).toEqual({ x: 55, y: 5 });
+  });
+
   it("re-measures once per frame after scroll events", () => {
     const { result } = renderHook(() => useTargetCenter());
     const rect = { left: 0, top: 0, width: 10, height: 10 };
