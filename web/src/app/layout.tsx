@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { siteMetadata } from "@/data/metadata";
 
@@ -34,6 +35,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-text-primary`}
       >
         {children}
+        {/* Same Google Analytics tag as the previous live site (moved over at cutover). */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-L4J7CCTJVB" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-L4J7CCTJVB');`}
+        </Script>
       </body>
     </html>
   );
