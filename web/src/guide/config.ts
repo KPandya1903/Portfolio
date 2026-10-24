@@ -103,7 +103,6 @@ export const HOVER_LINES: Record<string, string> = {
   "project-credit-risk": "My credit risk model reaches 0.91 AUC-ROC on synthetic data, with median API responses under 200 ms.",
   "project-nutrisense": "NutriSense recognizes ingredients at 96.41% test accuracy.",
   "project-quickfill": "QuickFill is published on the Chrome Web Store: snippets and autofill on any site.",
-  "project-passmanager": "PassManager is a lightweight server for encrypted password storage.",
   "project-ventureview-hr": "VentureViewHR is an AI HR assistant with Gemini-powered insights.",
   "skills-languages": "My languages: Python, Java, TypeScript, Go, C/C++, Swift, SQL and Bash.",
   "skills-distributed-systems-backend": "Backend and distributed systems: Chord DHT, gRPC, Redis, idempotency.",

@@ -40,7 +40,6 @@ files.
 | `project-credit-risk` | My credit risk model reaches 0.91 AUC-ROC on synthetic data, with median API responses under 200 ms. | `projects.ts` credit-risk `impact` (0.91 AUC-ROC, <200 ms median) |
 | `project-nutrisense` | NutriSense recognizes ingredients at 96.41% test accuracy. | `projects.ts` nutrisense `impact` (96.41% test accuracy; to be confirmed against the repo, see [notes](interactive-guide-notes.md)) |
 | `project-quickfill` | QuickFill is published on the Chrome Web Store: snippets and autofill on any site. | `projects.ts` quickfill description |
-| `project-passmanager` | PassManager is a lightweight server for encrypted password storage. | `projects.ts` passmanager description |
 | `project-ventureview-hr` | VentureViewHR is an AI HR assistant with Gemini-powered insights. | `projects.ts` ventureview-hr description |
 | `skills-languages` | My languages: Python, Java, TypeScript, Go, C/C++, Swift, SQL and Bash. | `skills.ts` Languages |
 | `skills-distributed-systems-backend` | Backend and distributed systems: Chord DHT, gRPC, Redis, idempotency. | `skills.ts` Distributed Systems & Backend |

@@ -242,25 +242,6 @@ export const projects: Project[] = [
     date: "Mar 2026"
   },
   {
-    id: "passmanager",
-    title: "PassManager Server",
-    category: "Security & Backend",
-    description: "Lightweight password manager server with trust-free architecture, end-to-end encryption, and secure session management.",
-    problem: "Deploy a secure password management solution on modest infrastructure without sacrificing cryptographic security standards.",
-    solution: "Built a Python-based server implementing trust-free architecture with end-to-end encryption, secure key management, and session-based access control. Designed RESTful API with comprehensive endpoint documentation and standardized response formats.",
-    impact: "Lightweight deployment suitable for small-scale infrastructure. Complete cryptographic implementation with secure authentication and encrypted data storage.",
-    tech: ["Python", "Cryptography", "REST API", "Session Management", "Database"],
-    githubRepo: "KPandya1903/PassManager-Server",
-    highlights: [
-      "Trust-free architecture design",
-      "End-to-end encryption for stored credentials",
-      "Secure session management and access control",
-      "Comprehensive API documentation",
-      "Lightweight deployable server"
-    ],
-    date: "Jan 2026"
-  },
-  {
     id: "ventureview-hr",
     title: "VentureViewHR — AI HR Assistant",
     category: "AI & Full-Stack",
